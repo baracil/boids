@@ -1,197 +1,224 @@
+mod data;
+mod gui_form;
+
 use raylib::prelude::*;
 use std::vec::Vec;
-use std::thread::current;
+use rand::Rng;
+use std::f32::consts::PI;
+use std::cmp::max;
+use raylib::ease::{bounce_in, quad_in};
 
-//all measurements are in SI
-const BIRD_SIZE:f32 = 0.2; //20cm
-const SEPARATION_FACTOR:f32 = 0.1;
-const COHESION_FACTOR:f32 = 0.1;
-const ALIGNMENT_FACTOR:f32 = 0.1;
-// const fn cos_max_angle() -> f32 {
-//     let angle = std::f32::consts::PI * 5. / 9.;
-//     angle.cos()
-// }
+use crate::data::vector::Vector;
+use crate::data::boid::Boid;
+use crate::data::steering::Steering;
+use crate::data::world::World;
+use crate::gui_form::{ButtonPar, GuiElement, GuiItem, get_gui_item};
+use crate::gui_form::GuiElement::Button;
+
+const CONSTRAINT_STRENGTH: f32 = 0.1;
+const DEAD_ANGLE: f32 = 0.0; // in degree
+
+const DEFAULT_SEPARATION_FACTOR: f32 = 10.;
+const DEFAULT_COHESION_FACTOR: f32 = 60.;
+const DEFAULT_ALIGNMENT_FACTOR: f32 = 10.;
+
+const DEFAULT_VISIBILITY_FACTOR: f32 = 5.0;
+
+const DEFAULT_NB_BIRDS: usize = 500;
+
+const RANDOM_FACTOR: f32 = 0.1;
+const DEFAULT_WORLD_SIZE: f32 = 10.;
+const DEFAULT_BIRD_SIZE: f32 = 0.2;
+const DEFAULT_BIRD_MIN_SPEED: f32 = 5.0;
+const DEFAULT_BIRD_MAX_SPEED: f32 = 16.0;
 
 
-#[derive(Copy,Clone)]
-struct Vector {
-    x: f32,
-    y: f32,
+pub struct ScreenSize {
+    pub width: i32,
+    pub height: i32,
 }
 
-impl Vector {
-
-    pub fn new() -> Self {
-        Vector{x:0.0,y:0.0}
-    }
-
-    pub fn subtract(&mut self, rhs: &Vector) {
-        self.x -= rhs.x;
-        self.y -= rhs.y;
-    }
-
-    pub fn add(&mut self, rhs: &Vector) {
-        self.x += rhs.x;
-        self.y += rhs.y;
-    }
-
-    pub fn add_scaled(&mut self, rhs: &Vector, scale:f32) {
-        self.x += rhs.x*scale;
-        self.y += rhs.y*scale;
-    }
-
-    pub fn scale(&mut self, scale:f32) {
-        self.x *= scale;
-        self.y *= scale;
-    }
-
-    pub fn hypot(&self) -> f32 {
-        self.x.hypot(self.y)
-    }
+pub struct Gui {
+    pub quit_button: GuiElement,
 }
 
-struct Steering {
-    separation:Vector,
-    alignment:Vector,
-    cohesion:Vector
+fn same_object<T>(a: &T, b: &T) -> bool {
+    a as *const T == b as *const T
 }
 
-impl Steering {
-    pub fn new() -> Self {
-        Steering{
-            separation: Vector::new(),
-            alignment: Vector::new(),
-            cohesion: Vector::new()
-        }
-    }
-}
+fn draw_gui(mut d: &mut RaylibDrawHandle, app_state: &mut BoidsModel) -> bool {
+    d.draw_rectangle(0, 0, app_state.gui_width as i32, app_state.screen_size.height, Color::RED);
 
-#[derive(Copy,Clone)]
-struct Boid {
-    position: Vector,
-    velocity: Vector,
-    speed: f32,
-}
 
-impl Boid {
-    pub fn update_position(&mut self, dt:f32) {
-        self.position.add_scaled(&self.velocity,dt);
-    }
-}
+    {
+        let mut should_quit = false;
 
-struct World {
-    cos_max_angle:f32,
-    current_is_one: bool,
-    boids1 : Vec<Boid>,
-    boids2 : Vec<Boid>,
-}
+        should_quit|= draw_element(d,&mut app_state.gui.quit_button,&Vector2{x:0.0,y:0.0});
+        should_quit|= draw_element(d,&mut app_state.gui.quit_button,&Vector2{x:0.0,y:60.0});
 
-impl World {
-
-    pub fn compute(&mut self,dt:f32) {
-        let mut current;
-        let mut next;
-        if self.current_is_one {
-            current = &self.boids1;
-            next = &self.boids2;
-        } else {
-            current = &self.boids2;
-            next = &self.boids1;
-        }
-
-        // self.compute_new_boid_positions(current, next.as_mut_slice(), dt);
-
-        self.current_is_one = !self.current_is_one;
+        return should_quit
     }
 
-    pub fn compute_new_boid_positions(&mut self, current : &Vec<Boid>, next: &mut[Boid],   dt:f32) {
-        let mut steering = Steering::new();
+}
 
-        for (i,boid) in current.iter().enumerate() {
 
-            self.compute_steering(*boid, current.as_slice(), &mut steering);
-            // next[i].position = boid.position;
-            // next[i].position.add_scaled(boit.velocity,dt);
-            //todo use also steering
-        }
-    }
+fn draw_element(d: &mut RaylibDrawHandle, element:&mut GuiElement, position:&Vector2) -> bool {
+    let mouse_position = d.get_mouse_position();
+    let left_pressed = d.is_mouse_button_released(raylib::consts::MouseButton::MOUSE_LEFT_BUTTON);
 
-    fn compute_steering(&mut self, reference: Boid, current : &[Boid], steering: &mut Steering) {
-        let mut buffer= Vector{x:0.,y:0.};
-        steering.separation.x=0.0;
-        steering.separation.y=0.0;
-        steering.alignment.x=0.0;
-        steering.alignment.y=0.0;
-        steering.cohesion.x=0.0;
-        steering.cohesion.y=0.0;
+    let mut gui_item = get_gui_item(element);
 
-        let mut nb_neighbour = 0;
-        for boid in current {
-            let visible = self.compute_separation(reference, *boid, &mut buffer);
-            if visible {
-                nb_neighbour+=1;
-                steering.separation.add(&buffer);
-                steering.alignment.add_scaled(&boid.velocity, 1./boid.speed);
-                steering.cohesion.add(&boid.position);
+    gui_item.set_position(position);
+
+    d.draw_rectangle_rec(gui_item.geometry(), gui_item.background_color());
+
+    let inside = gui_item.geometry().check_collision_point_rec(mouse_position);
+
+    if left_pressed && inside {
+        let mut element_id: &str = {
+            match &element {
+                Button(a) => { a.id.as_str() }
+                GuiElement::Slider(a) => { a.id.as_str() }
             }
-        }
-        if nb_neighbour>0 {
-            steering.alignment.scale(1./(nb_neighbour as f32));
-            steering.cohesion.scale(1./(nb_neighbour as f32));
-        }
+        };
+
+        return on_button_pressed(element_id);
     }
-
-
-    fn compute_separation(&mut self, reference: Boid, other: Boid, separation:&mut Vector) -> bool {
-        *separation = reference.position;
-        separation.subtract(&other.position);
-
-        let distance = separation.hypot();
-        let prod = (separation.x * reference.velocity.x + separation.y * reference.velocity.y) / (distance * reference.speed);
-
-        if prod<self.cos_max_angle {
-            return false;
-        }
-
-        let factor = (1./distance.max(BIRD_SIZE)).powi(2);
-        separation.x /=factor;
-        separation.y /=factor;
-
-        true
-
-    }
-
-
+    false
 }
 
 
 
+fn on_button_pressed( id: &str) -> bool {
+    if id == "quit" {
+        println!("QUIT PRESSED");
+        true
+    } else {
+        false
+    }
+}
 
+fn is_inside(mouse_position: &Vector2, x: f32, y: f32, width: f32, height: f32) -> bool {
+    return mouse_position.x >= x
+        && mouse_position.x <= x + width
+        && mouse_position.y >= y
+        && mouse_position.y <= y + height;
+}
 
+fn draw_birds<'a>(d: &mut RaylibDrawHandle<'a>,
+                  camera: &Camera2D,
+                  boids: &[Boid],
+                  bird_size: f32) {
+    {
+        let size_factor: f32 = 1.2;
+        let mut d = d.begin_mode2D(camera);
 
+        let mut head = Vector2 { x: 0.0, y: 0.0 };
+        let mut left_wing = Vector2 { x: 0.0, y: 0.0 };
+        let mut right_wing = Vector2 { x: 0.0, y: 0.0 };
 
+        for boid in boids {
+            let nvx = size_factor * bird_size * boid.velocity.x / boid.speed;
+            let nvy = size_factor * bird_size * boid.velocity.y / boid.speed;
+            head.x = nvx + boid.position.x;
+            head.y = nvy + boid.position.y;
 
-fn draw_birds() {}
+            left_wing.x = nvy * 0.3 + boid.position.x;
+            left_wing.y = -nvx * 0.3 + boid.position.y;
 
-fn compute_bird_positions() {}
+            right_wing.x = -nvy * 0.3 + boid.position.x;
+            right_wing.y = nvx * 0.3 + boid.position.y;
 
+//            d.draw_circle_v(head,,Color::BLACK);
+            d.draw_triangle(head, left_wing, right_wing, Color::BLACK);
+        }
+    }
+}
+
+pub struct BoidsModel {
+    pub gui_width: f32,
+    pub screen_size: ScreenSize,
+    pub gui: Gui,
+    pub world: World,
+}
+
+impl BoidsModel {
+    pub fn new(nb_birds: usize, world_size: f32) -> Self {
+        let quit_button = ButtonPar {
+            id: "quit".to_string(),
+            geometry: Rectangle{width:100.,height:30.,x:0.0,y:0.0},
+            color: Color::BLACK,
+            background_color: Color::GREEN,
+            text: "Quit".to_string(),
+        };
+        BoidsModel {
+            gui_width: 200.0,
+            screen_size: ScreenSize { width: 0, height: 0 },
+            gui: Gui {
+                quit_button: Button(Box::new(quit_button))
+            },
+            world: World::new(nb_birds, world_size),
+        }
+    }
+}
+
+impl BoidsModel {
+    pub fn camera_offset(&self) -> Vector2 {
+        return Vector2 {
+            x: (self.screen_size.width as f32 + self.gui_width) * 0.5,
+            y: self.screen_size.height as f32 * 0.5,
+        };
+    }
+    pub fn camera_zoom(&self) -> f32 {
+        return 0.9 * self.screen_size.width.min(self.screen_size.height) as f32 / (self.world.playfield_size * 2.0);
+    }
+}
 
 fn main() {
+    let mut app_state = BoidsModel::new(DEFAULT_NB_BIRDS, DEFAULT_WORLD_SIZE);
+
+    app_state.world.initialize();
+
     let (mut rl, thread) = raylib::init()
         .size(640, 480)
         .msaa_4x()
         .resizable()
         .vsync()
-        .title("Hello, World")
+        .title("Boids")
         .build();
 
     rl.set_target_fps(60);
 
-    while !rl.window_should_close() {
+
+    let mut camera_outdated = true;
+    let mut camera = Camera2D { target: Vector2 { x: 0., y: 0. }, offset: Vector2 { x: 0.0, y: 0.0 }, rotation: 0.0, zoom: 1.0 };
+
+    let mut should_quit = false;
+    while !rl.window_should_close() && !should_quit {
         let mut d = rl.begin_drawing(&thread);
 
+        camera_outdated = camera_outdated || d.is_window_resized();
+
+        if camera_outdated {
+            app_state.screen_size.width = d.get_screen_width();
+            app_state.screen_size.height = d.get_screen_height();
+            camera.offset = app_state.camera_offset();
+            camera.target.x = 0.0;
+            camera.target.y = 0.0;
+            camera.zoom = app_state.camera_zoom();
+        }
+
         d.clear_background(Color::WHITE);
-        draw_birds();
-        compute_bird_positions();
+        d.draw_fps(0, 0);
+
+        {
+            should_quit |= draw_gui(&mut d, &mut app_state);
+            draw_birds(&mut d, &mut camera, &(app_state.world.current[..]), app_state.world.parameters.bird_size);
+        }
+
+        let dt = d.get_frame_time();
+
+        app_state.world.compute(dt);
     }
 }
+
