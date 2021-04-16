@@ -159,19 +159,24 @@ impl World {
 
 fn constraint_boid_rect(boid: &mut Boid, playfield_size: f32) {
     let var = CONSTRAINT_STRENGTH;
-    let limit = playfield_size * 0.8;
+    let limitx = playfield_size * 0.9;
+    let limity = playfield_size * 0.8;
 
-    if boid.position.x > limit {
-        boid.velocity.x -= var * (boid.position.x - limit);
+    if boid.position.x > limitx {
+        boid.velocity.x -= var * (boid.position.x - limitx);
+        boid.velocity.y += 0.1;
     }
-    if boid.position.x < -limit {
-        boid.velocity.x += var * (-limit - boid.position.x);
+    if boid.position.x < -limitx {
+        boid.velocity.x += var * (-limitx - boid.position.x);
+        boid.velocity.y -= 0.1;
     }
-    if boid.position.y > limit {
-        boid.velocity.y -= var * (boid.position.y - limit);
+    if boid.position.y > limity {
+        boid.velocity.y -= var * (boid.position.y - limity);
+        boid.velocity.x += 0.1;
     }
-    if boid.position.y < -limit {
-        boid.velocity.y += var * (-limit - boid.position.y);
+    if boid.position.y < -limity {
+        boid.velocity.y += var * (-limity - boid.position.y);
+        boid.velocity.x -= 0.1;
     }
 }
 
