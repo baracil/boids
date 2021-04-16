@@ -2,35 +2,14 @@ mod data;
 mod gui_form;
 
 use raylib::prelude::*;
-use std::vec::Vec;
-use rand::Rng;
-use std::f32::consts::PI;
-use std::cmp::max;
-use raylib::ease::{bounce_in, quad_in};
 
-use crate::data::vector::Vector;
 use crate::data::boid::Boid;
-use crate::data::steering::Steering;
 use crate::data::world::World;
-use crate::gui_form::{ButtonPar, GuiElement, GuiItem, get_gui_item};
+use crate::gui_form::{ButtonPar, GuiElement, get_gui_item};
 use crate::gui_form::GuiElement::Button;
 
-const CONSTRAINT_STRENGTH: f32 = 0.1;
-const DEAD_ANGLE: f32 = 0.0; // in degree
-
-const DEFAULT_SEPARATION_FACTOR: f32 = 10.;
-const DEFAULT_COHESION_FACTOR: f32 = 60.;
-const DEFAULT_ALIGNMENT_FACTOR: f32 = 10.;
-
-const DEFAULT_VISIBILITY_FACTOR: f32 = 5.0;
-
 const DEFAULT_NB_BIRDS: usize = 500;
-
-const RANDOM_FACTOR: f32 = 0.1;
 const DEFAULT_WORLD_SIZE: f32 = 10.;
-const DEFAULT_BIRD_SIZE: f32 = 0.2;
-const DEFAULT_BIRD_MIN_SPEED: f32 = 5.0;
-const DEFAULT_BIRD_MAX_SPEED: f32 = 16.0;
 
 
 pub struct ScreenSize {
@@ -42,11 +21,7 @@ pub struct Gui {
     pub quit_button: GuiElement,
 }
 
-fn same_object<T>(a: &T, b: &T) -> bool {
-    a as *const T == b as *const T
-}
-
-fn draw_gui(mut d: &mut RaylibDrawHandle, app_state: &mut BoidsModel) -> bool {
+fn draw_gui(d: &mut RaylibDrawHandle, app_state: &mut BoidsModel) -> bool {
     d.draw_rectangle(0, 0, app_state.gui_width as i32, app_state.screen_size.height, Color::RED);
 
 
@@ -66,7 +41,7 @@ fn draw_element(d: &mut RaylibDrawHandle, element:&mut GuiElement, position:&Vec
     let mouse_position = d.get_mouse_position();
     let left_pressed = d.is_mouse_button_released(raylib::consts::MouseButton::MOUSE_LEFT_BUTTON);
 
-    let mut gui_item = get_gui_item(element);
+    let gui_item = get_gui_item(element);
 
     gui_item.set_position(position);
 
@@ -75,7 +50,7 @@ fn draw_element(d: &mut RaylibDrawHandle, element:&mut GuiElement, position:&Vec
     let inside = gui_item.geometry().check_collision_point_rec(mouse_position);
 
     if left_pressed && inside {
-        let mut element_id: &str = {
+        let element_id: &str = {
             match &element {
                 Button(a) => { a.id.as_str() }
                 GuiElement::Slider(a) => { a.id.as_str() }
@@ -96,13 +71,6 @@ fn on_button_pressed( id: &str) -> bool {
     } else {
         false
     }
-}
-
-fn is_inside(mouse_position: &Vector2, x: f32, y: f32, width: f32, height: f32) -> bool {
-    return mouse_position.x >= x
-        && mouse_position.x <= x + width
-        && mouse_position.y >= y
-        && mouse_position.y <= y + height;
 }
 
 fn draw_birds<'a>(d: &mut RaylibDrawHandle<'a>,
@@ -129,7 +97,6 @@ fn draw_birds<'a>(d: &mut RaylibDrawHandle<'a>,
             right_wing.x = -nvy * 0.3 + boid.position.x;
             right_wing.y = nvx * 0.3 + boid.position.y;
 
-//            d.draw_circle_v(head,,Color::BLACK);
             d.draw_triangle(head, left_wing, right_wing, Color::BLACK);
         }
     }
@@ -209,7 +176,7 @@ fn main() {
         }
 
         d.clear_background(Color::WHITE);
-        d.draw_fps(0, 0);
+        d.draw_fps( app_state.screen_size.width-100,0);
 
         {
             should_quit |= draw_gui(&mut d, &mut app_state);

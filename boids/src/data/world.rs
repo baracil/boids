@@ -7,16 +7,13 @@ use crate::data::vector::Vector;
 const CONSTRAINT_STRENGTH: f32 = 0.1;
 const DEAD_ANGLE: f32 = 0.0; // in degree
 
-const DEFAULT_SEPARATION_FACTOR: f32 = 10.;
+const DEFAULT_SEPARATION_FACTOR: f32 = 5.;
 const DEFAULT_COHESION_FACTOR: f32 = 40.;
 const DEFAULT_ALIGNMENT_FACTOR: f32 = 10.;
 
 const DEFAULT_VISIBILITY_FACTOR: f32 = 5.0;
 
-const DEFAULT_NB_BIRDS: usize = 500;
-
 const RANDOM_FACTOR: f32 = 0.1;
-const DEFAULT_WORLD_SIZE: f32 = 10.;
 const DEFAULT_BIRD_SIZE: f32 = 0.2;
 const DEFAULT_BIRD_MIN_SPEED: f32 = 5.0;
 const DEFAULT_BIRD_MAX_SPEED: f32 = 16.0;
@@ -85,7 +82,6 @@ impl World {
 
     pub fn compute(&mut self, dt: f32) {
         let mut steering = Steering::new();
-        let sum_of_factors = self.parameters.alignment_factor;
         let mut rng = rand::thread_rng();
 
         for (i, boid) in self.current.iter().enumerate() {
@@ -101,8 +97,6 @@ impl World {
                 target.velocity.add_scaled(&steering.separation, self.parameters.separation_factor);
                 target.velocity.add_scaled(&steering.alignment, self.parameters.alignment_factor);
                 target.velocity.add_scaled(&steering.cohesion, self.parameters.cohesion_factor);
-//                target.velocity.add_scaled(&current, -self.parameters.cohesion_factor);
-//                target.velocity.add_scaled(&current, -self.parameters.separation_factor);
                 target.velocity.add_scaled(&current, -self.parameters.alignment_factor);
 
 
@@ -181,12 +175,12 @@ fn constraint_boid_rect(boid: &mut Boid, playfield_size: f32) {
     }
 }
 
-fn constraint_boid_tanh(boid: &mut Boid, playfield_size: f32) {
-    let distance = boid.position.hypot();
-    let limit = playfield_size;
-
-    let d = (1.0 + ((distance - limit) * 100.0 / limit).tanh()) * CONSTRAINT_STRENGTH;
-
-    boid.velocity.x -= boid.position.x / distance * d;
-    boid.velocity.y -= boid.position.y / distance * d;
-}
+// fn constraint_boid_tanh(boid: &mut Boid, playfield_size: f32) {
+//     let distance = boid.position.hypot();
+//     let limit = playfield_size;
+//
+//     let d = (1.0 + ((distance - limit) * 100.0 / limit).tanh()) * CONSTRAINT_STRENGTH;
+//
+//     boid.velocity.x -= boid.position.x / distance * d;
+//     boid.velocity.y -= boid.position.y / distance * d;
+// }

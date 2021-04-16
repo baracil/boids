@@ -1,7 +1,7 @@
 use raylib::color::Color;
 use raylib::math::{Vector2, Rectangle};
 use raylib::drawing::RaylibDrawHandle;
-use std::ops::{Deref, DerefMut};
+use std::ops::{DerefMut};
 
 pub enum GuiElement {
     Button(Box<ButtonPar>),
