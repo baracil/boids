@@ -7,11 +7,11 @@ use crate::data::vector::Vector;
 const CONSTRAINT_STRENGTH: f32 = 0.1;
 const DEAD_ANGLE: f32 = 0.0; // in degree
 
-const DEFAULT_SEPARATION_FACTOR: f32 = 5.;
-const DEFAULT_COHESION_FACTOR: f32 = 40.;
-const DEFAULT_ALIGNMENT_FACTOR: f32 = 10.;
+const DEFAULT_SEPARATION_FACTOR: f32 = 2.;
+const DEFAULT_COHESION_FACTOR: f32 = 4.;
+const DEFAULT_ALIGNMENT_FACTOR: f32 = 30.;
 
-const DEFAULT_VISIBILITY_FACTOR: f32 = 5.0;
+const DEFAULT_VISIBILITY_FACTOR: f32 = 3.0;
 
 const RANDOM_FACTOR: f32 = 0.1;
 const DEFAULT_BIRD_SIZE: f32 = 0.2;
@@ -137,11 +137,17 @@ impl World {
     }
 
     fn compute_separation(&self, reference: Boid, other: Boid, separation: &mut Vector) -> bool {
+        let visibility_radius = self.parameters.visibility_radius;
         *separation = reference.position;
         separation.subtract(&other.position);
 
-        let distance = separation.hypot();
 
+        if separation.x.abs()>visibility_radius || separation.y.abs()>visibility_radius {
+            return false;
+        }
+
+
+        let distance = separation.hypot();
         let prod = (separation.x * reference.velocity.x + separation.y * reference.velocity.y) / (distance * reference.speed);
 
         let outside_of_visibility = distance > self.parameters.visibility_radius;

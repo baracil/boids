@@ -8,7 +8,7 @@ use crate::data::world::World;
 use crate::gui_form::{ButtonPar, GuiElement, get_gui_item};
 use crate::gui_form::GuiElement::Button;
 
-const DEFAULT_NB_BIRDS: usize = 500;
+const DEFAULT_NB_BIRDS: usize = 3000;
 const DEFAULT_WORLD_SIZE: f32 = 10.;
 
 
