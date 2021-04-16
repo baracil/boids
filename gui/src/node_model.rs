@@ -13,7 +13,6 @@ pub struct NodeModel {
 
     pub padding: f32,
 
-    pub label: Option<String>,
     pub action_id: Option<String>,
 }
 
@@ -32,7 +31,6 @@ impl NodeModel {
             disable: false,
             padding: 0.0,
             action_id: None,
-            label:None
         }
     }
 }

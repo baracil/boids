@@ -5,7 +5,7 @@ use crate::node_state::NodeState;
 use crate::node_geometry::NodeGeometry;
 use crate::node_model::NodeModel;
 use crate::mouse::MouseState;
-use crate::node::{NodePar, DirtyFlags};
+use crate::node::{NodePar, DirtyFlags, Size};
 
 pub struct ButtonPar {
     state:NodeState,
@@ -14,6 +14,7 @@ pub struct ButtonPar {
 }
 
 impl NodePar for ButtonPar {
+
     fn content_width(&self) -> f32 {
         self.geometry.content_size.width
     }
@@ -27,6 +28,7 @@ impl NodePar for ButtonPar {
     }
 
     fn layout(&mut self) {
+
         todo!()
     }
 
@@ -45,6 +47,7 @@ impl NodePar for ButtonPar {
         self.geometry.alignment = alignment;
         self.geometry.target.x = point.x;
         self.geometry.target.y = point.y;
+        self.state.dirty_flags |= DirtyFlags::POSITION;
         self
     }
 
@@ -55,5 +58,34 @@ impl NodePar for ButtonPar {
         self.model.padding = padding;
         self.state.dirty_flags |= DirtyFlags::SIZE;
         self
+    }
+
+    fn clear_requested_size(&mut self) -> &mut dyn NodePar {
+        self.geometry.requested_size = Size::none();
+        self.state.dirty_flags |= DirtyFlags::SIZE;
+        self
+    }
+
+    fn set_requested_height(&mut self, height: f32) -> &mut dyn NodePar {
+        if height == self.geometry.requested_size.height {
+            return self;
+        }
+        self.geometry.requested_size.height = height;
+        self.state.dirty_flags |= DirtyFlags::SIZE;
+        self
+    }
+
+    fn set_requested_width(&mut self, width: f32) -> &mut dyn NodePar {
+        if width == self.geometry.requested_size.width {
+            return self;
+        }
+        self.geometry.requested_size.width = width;
+        self.state.dirty_flags |= DirtyFlags::SIZE;
+        self
+    }
+
+    fn set_requested_size(&mut self, size: Size) -> &mut dyn NodePar {
+        self.set_requested_width(size.width);
+        self.set_requested_height(size.height)
     }
 }

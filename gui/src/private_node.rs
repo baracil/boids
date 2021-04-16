@@ -1,4 +1,4 @@
-use crate::node::{Parent, NodePar, Item, Node};
+use crate::node::{Parent, NodePar, Item, Node, Size};
 use raylib::math::Vector2;
 use crate::alignment::Alignment;
 use crate::mouse::MouseState;
@@ -10,15 +10,17 @@ pub struct InnerNode {
     children: Vec<Box<dyn Node>>,
 }
 
-fn get_node_trait_mut(item: &mut Item) -> &mut dyn NodePar {
+pub fn get_node_trait_mut(item: &mut Item) -> &mut dyn NodePar {
     match item {
-        Item::Button(a) => a
+        Item::Button(a) => a,
+        Item::Label(a) => a,
     }
 }
 
-fn get_nodepar_trait(item: &Item) -> &dyn NodePar {
+pub fn get_nodepar_trait(item: &Item) -> &dyn NodePar {
     match item {
-        Item::Button(a) => a
+        Item::Button(a) => a,
+        Item::Label(a) => a
     }
 }
 
@@ -37,10 +39,15 @@ impl Node for InnerNode {
     fn item(&self) -> &Item {
         &self.item
     }
+
+    fn item_mut(&mut self) -> &mut Item {
+        &mut self.item
+    }
 }
 
 //Check for macro derive. this should be better than this
 impl NodePar for InnerNode {
+
     fn content_width(&self) -> f32 {
         get_nodepar_trait(&self.item).content_height()
     }
@@ -74,5 +81,22 @@ impl NodePar for InnerNode {
     fn set_padding(&mut self, padding: f32) -> &mut dyn NodePar {
         get_node_trait_mut(&mut self.item)
             .set_padding(padding)
+    }
+
+    fn clear_requested_size(&mut self) -> &mut dyn NodePar {
+        get_node_trait_mut(&mut self.item).clear_requested_size()
+    }
+
+
+    fn set_requested_height(&mut self, height: f32) -> &mut dyn NodePar {
+        get_node_trait_mut(&mut self.item).set_requested_height(height)
+    }
+
+    fn set_requested_width(&mut self, width: f32) -> &mut dyn NodePar {
+        get_node_trait_mut(&mut self.item).set_requested_width(width)
+    }
+
+    fn set_requested_size(&mut self, size: Size) -> &mut dyn NodePar {
+        get_node_trait_mut(&mut self.item).set_requested_size(size)
     }
 }

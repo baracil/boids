@@ -8,8 +8,10 @@ pub struct NodeGeometry {
     pub requested_size: Size,   //requested size of the node
 
     pub content_size: Size,     //size of the content
+    pub item_size: Size,        // size of the item
+
     pub content_layout: Rectangle, //layout of the content
-    pub back_layout: Rectangle,    //layout of the background
+    pub item_layout: Rectangle,    //layout of the background
 }
 
 impl NodeGeometry {
@@ -17,10 +19,28 @@ impl NodeGeometry {
         Self {
             target: Vector2::new(0.0, 0.0),
             alignment: Alignment::new(),
-            back_layout: Default::default(),
+            item_layout: Default::default(),
             content_layout: Default::default(),
             content_size: Size::new(),
-            requested_size: Size::new(),
+            item_size: Size::new(),
+            requested_size: Size {width:-1.0,height:-1.0},
         }
+    }
+
+    pub fn copy_size_to_layout(&mut self) {
+        self.content_layout.width = self.content_size.width;
+        self.content_layout.height = self.content_size.height;
+        self.item_layout.width = self.item_size.width;
+        self.item_layout.height = self.item_size.height;
+    }
+
+    pub fn compute_item_position(&mut self) {
+        self.item_layout.x = self.target.x + self.alignment.horizontal.shift_factor()*self.item_size.width;
+        self.item_layout.y = self.target.y + self.alignment.vertical.shift_factor()*self.item_size.height;
+    }
+
+    pub fn compute_content_position(&mut self) {
+        self.content_layout.x = self.item_layout.x + (self.item_layout.width - self.content_layout.width)*0.5;
+        self.content_layout.y = self.item_layout.y + (self.item_layout.height - self.content_layout.height)*0.5;
     }
 }

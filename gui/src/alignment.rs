@@ -1,29 +1,29 @@
 use crate::alignment::VAlignment::Center;
 use crate::alignment::HAlignment::Middle;
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum VAlignment {
     Top,
     Center,
     Bottom,
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub enum HAlignment {
     Left,
     Middle,
     Right,
 }
 
-#[derive(Copy, Clone, PartialEq)]
+#[derive(Copy, Clone, Eq, PartialEq)]
 pub struct Alignment {
-    vertical_alignment: VAlignment,
-    horizontal_alignment: HAlignment,
+    pub vertical: VAlignment,
+    pub horizontal: HAlignment,
 }
 
 impl Alignment {
     pub fn new() -> Self {
-        Self{vertical_alignment:Center, horizontal_alignment:Middle}
+        Self{ vertical:Center, horizontal:Middle}
     }
 }
 
@@ -32,8 +32,8 @@ impl VAlignment {
     pub fn shift_factor(&self) -> f32 {
         match self {
             VAlignment::Top => 0.,
-            VAlignment::Center => 0.5,
-            VAlignment::Bottom => 1.0,
+            VAlignment::Center => -0.5,
+            VAlignment::Bottom => -1.0,
         }
     }
 }
@@ -41,9 +41,9 @@ impl VAlignment {
 impl HAlignment {
     pub fn shift_factor(&self) -> f32 {
         match self {
-            HAlignment::Left => 0.,
-            HAlignment::Middle => 0.5,
-            HAlignment::Right => 1.0,
+            HAlignment::Right => -1.0,
+            HAlignment::Middle => -0.5,
+            HAlignment::Left => 0.0,
         }
     }
 }
