@@ -137,7 +137,7 @@ impl BoidsModel {
         };
     }
     pub fn camera_zoom(&self) -> f32 {
-        return 0.9 * self.screen_size.width.min(self.screen_size.height) as f32 / (self.world.playfield_size * 2.0);
+        return 0.8 * self.screen_size.width.min(self.screen_size.height) as f32 / (self.world.playfield_size * 2.0);
     }
 }
 
