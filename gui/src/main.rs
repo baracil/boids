@@ -1,13 +1,11 @@
-use gui::node::Item::Label;
-use gui::label::LabelPar;
 use raylib::prelude::*;
-use gui::node::{FontInfo, NodePar};
-use gui::private_node::get_node_trait_mut;
+use gui::node::{Node, LayoutableNode, RenderableNode};
 use gui::alignment::Alignment;
 use gui::alignment::VAlignment::{Top, Center, Bottom};
 use gui::alignment::HAlignment::{Left, Middle, Right};
 use gui::gui::Gui;
 use gui::gui::create_gui;
+use gui::label::Label;
 
 
 fn main() {
@@ -48,13 +46,12 @@ fn main() {
     let id = gui.load_font(&mut rl,&thread,"/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",48,200).unwrap();
     let font_info = gui.get_font(id.as_str()).unwrap();
 
-    let mut par = LabelPar::new(font_info);
+    let mut par = Label::new(font_info);
     par.set_padding(10.0);
     par.text = Some(String::from("Hello2"));
     par.set_position(&Vector2{x:120.0,y:120.0},Alignment{ vertical:Bottom, horizontal:Right});
-    let mut label = Label(par);
 
-    get_node_trait_mut(&mut label).layout();
+    par.layout();
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
@@ -64,7 +61,7 @@ fn main() {
 
         d.clear_background(Color::WHITE);
 
-        get_node_trait_mut(&mut label).render(&mut d);
+        par.render(&mut d);
 
         d.draw_line(0,120,screen_width,120, Color::RED);
         d.draw_line(120,0,120,screen_height, Color::RED);

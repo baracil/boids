@@ -21,8 +21,8 @@ impl NodeGeometry {
             alignment: Alignment::new(),
             item_layout: Default::default(),
             content_layout: Default::default(),
-            content_size: Size::new(),
-            item_size: Size::new(),
+            content_size: Size::empty(),
+            item_size: Size::empty(),
             requested_size: Size {width:-1.0,height:-1.0},
         }
     }

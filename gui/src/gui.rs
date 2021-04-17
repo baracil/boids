@@ -1,12 +1,15 @@
-use crate::node::{FontInfo, Node};
-use raylib::{RaylibThread, RaylibHandle};
-use raylib::text::FontLoadEx;
 use std::collections::HashMap;
-use uuid::Uuid;
-use raylib::core::text::Font;
 use std::hint::unreachable_unchecked;
 use std::path::Prefix::UNC;
 use std::rc::Rc;
+
+use raylib::{RaylibHandle, RaylibThread};
+use raylib::core::text::Font;
+use raylib::text::FontLoadEx;
+use uuid::Uuid;
+
+use crate::font::FontInfo;
+use crate::node::Node;
 
 pub trait Gui<'a> :  {
     fn load_font(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, font_file: &str, size: i32, nb_chars: i32) -> Result<String, String>;

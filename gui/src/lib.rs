@@ -3,15 +3,15 @@ extern crate bitflags;
 
 pub mod node;
 pub mod alignment ;
-pub mod button;
 pub mod label;
 pub mod mouse;
 pub mod node_state;
 pub mod node_model;
 pub mod node_geometry;
 
-pub mod private_node;
+pub mod node_data;
 pub mod gui;
+pub mod font;
 
 #[cfg(test)]
 mod tests {
