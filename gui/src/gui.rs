@@ -12,9 +12,14 @@ use crate::font::FontInfo;
 use crate::node::Node;
 
 pub trait Gui<'a> :  {
+    /// Load a font and save it internally. Returns
+    /// an id to get the associated font int
     fn load_font(&mut self, rl: &mut RaylibHandle, thread: &RaylibThread, font_file: &str, size: i32, nb_chars: i32) -> Result<String, String>;
+
+    /// Return the font information associated with the provided id.
     fn get_font(&self, font_id: &str) -> Option<FontInfo>;
 
+    /// Create a Label
     fn create_label(&mut self, text: &str, font_id: &str) -> &'a mut dyn Node;
 
 }
