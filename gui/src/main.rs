@@ -46,12 +46,12 @@ fn main() {
     let id = gui.load_font(&mut rl,&thread,"/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",48,200).unwrap();
     let font_info = gui.get_font(id.as_str()).unwrap();
 
-    let mut par = Label::new(font_info);
-    par.set_padding(10.0);
-    par.text = Some(String::from("Hello2"));
-    par.set_position(&Vector2{x:120.0,y:120.0},Alignment{ vertical:Bottom, horizontal:Right});
+    let mut label = Label::new(font_info);
+    label.set_padding(10.0);
+    label.set_text(String::from("Hello2"));
+    label.set_position(&Vector2{x:120.0,y:120.0}, Alignment{ vertical:Bottom, horizontal:Right});
 
-    par.layout();
+    label.layout();
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
@@ -61,7 +61,7 @@ fn main() {
 
         d.clear_background(Color::WHITE);
 
-        par.render(&mut d);
+        label.render(&mut d);
 
         d.draw_line(0,120,screen_width,120, Color::RED);
         d.draw_line(120,0,120,screen_height, Color::RED);

@@ -11,12 +11,12 @@ use raylib::math::Rectangle;
 use raylib::color::Color;
 use std::rc::Rc;
 use crate::font::FontInfo;
-use crate::node_data::{NodeData, NodeBase};
+use crate::node_data::{NodeData, NodeBase, SizeableNode};
 
 pub struct Label {
     pub data: NodeData,
-    pub text: Option<String>,
-    pub font: FontInfo,
+    text: Option<String>,
+    font: FontInfo,
     pub spacing:f32, //todo use style to define this value
     pub color:Color,//todo use style to define this value
 }
@@ -34,6 +34,25 @@ impl Label {
         }
     }
 
+    pub fn clear_text(&mut self) -> &mut Label {
+        if let Some(_) = self.text {
+            self.data.set_dirty_flag(DirtyFlags::SIZE);
+            self.text = None;
+        }
+        self
+    }
+
+    pub fn set_text(&mut self, text:String) -> &mut Label {
+        if let Some(txt) = &self.text {
+            if text.eq(txt) {
+                return self;
+            }
+        }
+        self.data.set_dirty_flag(DirtyFlags::SIZE);
+        self.text = Some(text);
+        self
+    }
+
 }
 
 impl NodeBase for Label {
@@ -44,7 +63,9 @@ impl NodeBase for Label {
     fn node_data_mut(&mut self) -> &mut NodeData {
         return &mut self.data;
     }
+}
 
+impl SizeableNode for Label {
     fn compute_content_size(&self) -> Size {
         let text = match &self.text {
             None => "",

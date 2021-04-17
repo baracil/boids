@@ -28,6 +28,14 @@ impl NodeData {
         }
     }
 
+    pub fn set_dirty_flag(&mut self, flag:DirtyFlags) {
+        self.state.dirty_flags |= flag;
+    }
+
+    pub fn unset_dirty_flag(&mut self, flag:DirtyFlags) -> bool {
+        self.state.unset_dirty_flag(flag)
+    }
+
     fn compute_style(&mut self) {
         if self.state.unset_dirty_flag(DirtyFlags::STYLE) {
             return;
@@ -65,16 +73,16 @@ impl NodeData {
         self.geometry.compute_content_position();
     }
 
-    fn layout(&mut self, node_base: &dyn NodeBase) {
+    fn layout(&mut self, sizeable_node: &dyn SizeableNode) {
         self.compute_style();
-        let content_size = node_base.compute_content_size();
+        let content_size = sizeable_node.compute_content_size();
         self.geometry.content_size = content_size;
         self.compute_item_size();
         self.compute_position();
     }
 }
 
-impl<N: NodeBase> LayoutableNode for N {
+impl<N: NodeBase + SizeableNode> LayoutableNode for N {
     fn layout(&mut self) {
         self.node_data_mut().compute_style();
         let content_size = self.compute_content_size();
@@ -88,6 +96,9 @@ impl<N: NodeBase> LayoutableNode for N {
 pub trait NodeBase {
     fn node_data(&self) -> &NodeData;
     fn node_data_mut(&mut self) -> &mut NodeData;
+}
+
+pub trait SizeableNode {
     fn compute_content_size(&self) -> Size;
 }
 
