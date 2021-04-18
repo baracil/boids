@@ -1,8 +1,8 @@
-use crate::data::boid::Boid;
 use rand::Rng;
+
+use crate::data::boid::Boid;
 use crate::data::steering::Steering;
 use crate::data::vector::Vector;
-
 
 const CONSTRAINT_STRENGTH: f32 = 0.1;
 const DEAD_ANGLE: f32 = 0.0; // in degree
@@ -13,15 +13,14 @@ const DEFAULT_SEPARATION_FACTOR: f32 = 2.0;
 const DEFAULT_COHESION_FACTOR: f32 = 2.;
 const DEFAULT_ALIGNMENT_FACTOR: f32 = 10.;
 
-
 const RANDOM_FACTOR: f32 = 0.0;
 const DEFAULT_BIRD_SIZE: f32 = 0.2;
 const DEFAULT_BIRD_MIN_SPEED: f32 = 5.0;
 const DEFAULT_BIRD_MAX_SPEED: f32 = 16.0;
 
-const NOT_VISIBLE:u8 = 0;
-const VISIBLE:u8 = 1;
-const IN_SAFE_SPACE:u8 = 2;
+const NOT_VISIBLE: u8 = 0;
+const VISIBLE: u8 = 1;
+const IN_SAFE_SPACE: u8 = 2;
 
 pub struct Parameters {
     pub bird_size: f32,
@@ -48,7 +47,6 @@ impl Parameters {
         }
     }
 }
-
 
 pub struct World {
     pub playfield_size: f32,
@@ -81,7 +79,10 @@ impl World {
             boid.velocity.y = (rng.gen::<f32>() - 0.5) * self.playfield_size * 0.1;
             boid.speed = boid.velocity.hypot();
 
-            boid.clamp_speed(self.parameters.min_bird_speed, self.parameters.max_bird_speed);
+            boid.clamp_speed(
+                self.parameters.min_bird_speed,
+                self.parameters.max_bird_speed,
+            );
         }
     }
 
@@ -90,7 +91,7 @@ impl World {
         let mut rng = rand::thread_rng();
 
         for (i, boid) in self.current.iter().enumerate() {
-            let has_neighbours = self.compute_steering(*boid, i,&mut steering);
+            let has_neighbours = self.compute_steering(*boid, i, &mut steering);
             let mut target: &mut Boid = &mut self.next[i];
             target.position = boid.position;
             target.velocity = boid.velocity;
@@ -99,17 +100,29 @@ impl World {
             if has_neighbours {
                 let current = target.velocity;
 
-                target.velocity.add_scaled(&steering.separation, self.parameters.separation_factor);
-                target.velocity.add_scaled(&steering.alignment, self.parameters.alignment_factor);
-                target.velocity.add_scaled(&steering.cohesion, self.parameters.cohesion_factor);
-                target.velocity.add_scaled(&current, -self.parameters.alignment_factor);
+                target
+                    .velocity
+                    .add_scaled(&steering.separation, self.parameters.separation_factor);
+                target
+                    .velocity
+                    .add_scaled(&steering.alignment, self.parameters.alignment_factor);
+                target
+                    .velocity
+                    .add_scaled(&steering.cohesion, self.parameters.cohesion_factor);
+                target
+                    .velocity
+                    .add_scaled(&current, -self.parameters.alignment_factor);
 
-
-                target.velocity.x += target.velocity.x * (2.0 * rng.gen::<f32>() - 1.0) * RANDOM_FACTOR;
-                target.velocity.y += target.velocity.y * (2.0 * rng.gen::<f32>() - 1.0) * RANDOM_FACTOR;
+                target.velocity.x +=
+                    target.velocity.x * (2.0 * rng.gen::<f32>() - 1.0) * RANDOM_FACTOR;
+                target.velocity.y +=
+                    target.velocity.y * (2.0 * rng.gen::<f32>() - 1.0) * RANDOM_FACTOR;
 
                 target.update_speed();
-                target.clamp_speed(self.parameters.min_bird_speed, self.parameters.max_bird_speed);
+                target.clamp_speed(
+                    self.parameters.min_bird_speed,
+                    self.parameters.max_bird_speed,
+                );
             }
             constraint_boid_rect(&mut target, self.playfield_size);
         }
@@ -117,16 +130,20 @@ impl World {
         self.current.swap_with_slice(&mut self.next);
     }
 
-
-    fn compute_steering(&self, reference: Boid, reference_idx:usize, steering: &mut Steering) -> bool {
+    fn compute_steering(
+        &self,
+        reference: Boid,
+        reference_idx: usize,
+        steering: &mut Steering,
+    ) -> bool {
         let mut buffer = Vector { x: 0., y: 0. };
         steering.clear();
 
         let mut nb_visible = 0;
         let mut nb_in_safe_space = 0;
-        for (j,boid) in self.current.iter().enumerate() {
+        for (j, boid) in self.current.iter().enumerate() {
             if j == reference_idx {
-                continue
+                continue;
             }
             let visibility = self.compute_separation(reference, *boid, &mut buffer);
             if (visibility & IN_SAFE_SPACE) != 0 {
@@ -145,7 +162,7 @@ impl World {
             steering.cohesion.subtract(&reference.position);
             return true;
         }
-        return nb_in_safe_space>0;
+        return nb_in_safe_space > 0;
     }
 
     fn compute_separation(&self, reference: Boid, other: Boid, separation: &mut Vector) -> u8 {
@@ -153,29 +170,27 @@ impl World {
         *separation = reference.position;
         separation.subtract(&other.position);
 
-
-        if separation.x.abs()>visibility_radius || separation.y.abs()>visibility_radius {
+        if separation.x.abs() > visibility_radius || separation.y.abs() > visibility_radius {
             return NOT_VISIBLE;
         }
 
         let distance = separation.hypot();
-        if distance>visibility_radius {
+        if distance > visibility_radius {
             return NOT_VISIBLE;
         }
-        let prod = (separation.x * reference.velocity.x + separation.y * reference.velocity.y) / (distance * reference.speed);
+        let prod = (separation.x * reference.velocity.x + separation.y * reference.velocity.y)
+            / (distance * reference.speed);
         if prod < self.parameters.cos_max_angle {
             return NOT_VISIBLE;
         }
 
-        if distance < visibility_radius*SAFE_SPACE_RATIO {
-            return IN_SAFE_SPACE|VISIBLE;
+        if distance < visibility_radius * SAFE_SPACE_RATIO {
+            return IN_SAFE_SPACE | VISIBLE;
         }
 
         VISIBLE
     }
 }
-
-
 
 fn constraint_boid_rect(boid: &mut Boid, playfield_size: f32) {
     let var = CONSTRAINT_STRENGTH;

@@ -1,16 +1,15 @@
-mod data;
-mod gui_form;
-
 use raylib::prelude::*;
 
 use crate::data::boid::Boid;
 use crate::data::world::World;
-use crate::gui_form::{ButtonPar, GuiElement, get_gui_item};
+use crate::gui_form::{ButtonPar, get_gui_item, GuiElement};
 use crate::gui_form::GuiElement::Button;
+
+mod data;
+mod gui_form;
 
 const DEFAULT_NB_BIRDS: usize = 1000;
 const DEFAULT_WORLD_SIZE: f32 = 10.;
-
 
 pub struct ScreenSize {
     pub width: i32,
@@ -22,22 +21,33 @@ pub struct Gui {
 }
 
 fn draw_gui(d: &mut RaylibDrawHandle, app_state: &mut BoidsModel) -> bool {
-    d.draw_rectangle(0, 0, app_state.gui_width as i32, app_state.screen_size.height, Color::RED);
-
+    d.draw_rectangle(
+        0,
+        0,
+        app_state.gui_width as i32,
+        app_state.screen_size.height,
+        Color::RED,
+    );
 
     {
         let mut should_quit = false;
 
-        should_quit|= draw_element(d,&mut app_state.gui.quit_button,&Vector2{x:0.0,y:0.0});
-        should_quit|= draw_element(d,&mut app_state.gui.quit_button,&Vector2{x:0.0,y:60.0});
+        should_quit |= draw_element(
+            d,
+            &mut app_state.gui.quit_button,
+            &Vector2 { x: 0.0, y: 0.0 },
+        );
+        should_quit |= draw_element(
+            d,
+            &mut app_state.gui.quit_button,
+            &Vector2 { x: 0.0, y: 60.0 },
+        );
 
-        return should_quit
+        return should_quit;
     }
-
 }
 
-
-fn draw_element(d: &mut RaylibDrawHandle, element:&mut GuiElement, position:&Vector2) -> bool {
+fn draw_element(d: &mut RaylibDrawHandle, element: &mut GuiElement, position: &Vector2) -> bool {
     let mouse_position = d.get_mouse_position();
     let left_pressed = d.is_mouse_button_released(raylib::consts::MouseButton::MOUSE_LEFT_BUTTON);
 
@@ -47,13 +57,15 @@ fn draw_element(d: &mut RaylibDrawHandle, element:&mut GuiElement, position:&Vec
 
     d.draw_rectangle_rec(gui_item.geometry(), gui_item.background_color());
 
-    let inside = gui_item.geometry().check_collision_point_rec(mouse_position);
+    let inside = gui_item
+        .geometry()
+        .check_collision_point_rec(mouse_position);
 
     if left_pressed && inside {
         let element_id: &str = {
             match &element {
-                Button(a) => { a.id.as_str() }
-                GuiElement::Slider(a) => { a.id.as_str() }
+                Button(a) => a.id.as_str(),
+                GuiElement::Slider(a) => a.id.as_str(),
             }
         };
 
@@ -62,9 +74,7 @@ fn draw_element(d: &mut RaylibDrawHandle, element:&mut GuiElement, position:&Vec
     false
 }
 
-
-
-fn on_button_pressed( id: &str) -> bool {
+fn on_button_pressed(id: &str) -> bool {
     if id == "quit" {
         println!("QUIT PRESSED");
         true
@@ -73,10 +83,7 @@ fn on_button_pressed( id: &str) -> bool {
     }
 }
 
-fn draw_birds<'a>(d: &mut RaylibDrawHandle<'a>,
-                  camera: &Camera2D,
-                  boids: &[Boid],
-                  bird_size: f32) {
+fn draw_birds<'a>(d: &mut RaylibDrawHandle<'a>, camera: &Camera2D, boids: &[Boid], bird_size: f32) {
     {
         let size_factor: f32 = 1.2;
         let mut d = d.begin_mode2D(camera);
@@ -113,16 +120,24 @@ impl BoidsModel {
     pub fn new(nb_birds: usize, world_size: f32) -> Self {
         let quit_button = ButtonPar {
             id: "quit".to_string(),
-            geometry: Rectangle{width:100.,height:30.,x:0.0,y:0.0},
+            geometry: Rectangle {
+                width: 100.,
+                height: 30.,
+                x: 0.0,
+                y: 0.0,
+            },
             color: Color::BLACK,
             background_color: Color::GREEN,
             text: "Quit".to_string(),
         };
         BoidsModel {
             gui_width: 200.0,
-            screen_size: ScreenSize { width: 0, height: 0 },
+            screen_size: ScreenSize {
+                width: 0,
+                height: 0,
+            },
             gui: Gui {
-                quit_button: Button(Box::new(quit_button))
+                quit_button: Button(Box::new(quit_button)),
             },
             world: World::new(nb_birds, world_size),
         }
@@ -137,7 +152,8 @@ impl BoidsModel {
         };
     }
     pub fn camera_zoom(&self) -> f32 {
-        return 0.8 * self.screen_size.width.min(self.screen_size.height) as f32 / (self.world.playfield_size * 2.0);
+        return 0.8 * self.screen_size.width.min(self.screen_size.height) as f32
+            / (self.world.playfield_size * 2.0);
     }
 }
 
@@ -156,9 +172,13 @@ fn main() {
 
     rl.set_target_fps(60);
 
-
     let mut camera_outdated = true;
-    let mut camera = Camera2D { target: Vector2 { x: 0., y: 0. }, offset: Vector2 { x: 0.0, y: 0.0 }, rotation: 0.0, zoom: 1.0 };
+    let mut camera = Camera2D {
+        target: Vector2 { x: 0., y: 0. },
+        offset: Vector2 { x: 0.0, y: 0.0 },
+        rotation: 0.0,
+        zoom: 1.0,
+    };
 
     let mut should_quit = false;
     while !rl.window_should_close() && !should_quit {
@@ -176,11 +196,16 @@ fn main() {
         }
 
         d.clear_background(Color::WHITE);
-        d.draw_fps( app_state.screen_size.width-100,0);
+        d.draw_fps(app_state.screen_size.width - 100, 0);
 
         {
             should_quit |= draw_gui(&mut d, &mut app_state);
-            draw_birds(&mut d, &mut camera, &(app_state.world.current[..]), app_state.world.parameters.bird_size);
+            draw_birds(
+                &mut d,
+                &mut camera,
+                &(app_state.world.current[..]),
+                app_state.world.parameters.bird_size,
+            );
         }
 
         let dt = d.get_frame_time();
@@ -188,4 +213,3 @@ fn main() {
         app_state.world.compute(dt);
     }
 }
-

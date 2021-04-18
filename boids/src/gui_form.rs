@@ -1,15 +1,15 @@
+use std::ops::DerefMut;
+
 use raylib::color::Color;
-use raylib::math::{Vector2, Rectangle};
 use raylib::drawing::RaylibDrawHandle;
-use std::ops::{DerefMut};
+use raylib::math::{Rectangle, Vector2};
 
 pub enum GuiElement {
     Button(Box<ButtonPar>),
     Slider(Box<SlidePar>),
 }
 
-
-pub fn get_gui_item(element:&mut GuiElement) -> & mut dyn GuiItem {
+pub fn get_gui_item(element: &mut GuiElement) -> &mut dyn GuiItem {
     match element {
         GuiElement::Button(a) => a.deref_mut(),
         GuiElement::Slider(a) => a.deref_mut(),

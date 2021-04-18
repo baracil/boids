@@ -21,4 +21,3 @@ impl Steering {
         self.cohesion.clear();
     }
 }
-

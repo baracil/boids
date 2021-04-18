@@ -1,5 +1,5 @@
-use crate::alignment::VAlignment::Center;
 use crate::alignment::HAlignment::Middle;
+use crate::alignment::VAlignment::Center;
 
 #[derive(Copy, Clone, Eq, PartialEq)]
 pub enum VAlignment {
@@ -23,10 +23,12 @@ pub struct Alignment {
 
 impl Alignment {
     pub fn new() -> Self {
-        Self{ vertical:Center, horizontal:Middle}
+        Self {
+            vertical: Center,
+            horizontal: Middle,
+        }
     }
 }
-
 
 impl VAlignment {
     pub fn shift_factor(&self) -> f32 {

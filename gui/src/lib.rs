@@ -1,17 +1,20 @@
 #[macro_use]
 extern crate bitflags;
 
-pub mod node;
-pub mod alignment ;
-pub mod label;
+pub mod alignment;
+// pub mod label;
 pub mod mouse;
-pub mod node_state;
-pub mod node_model;
-pub mod node_geometry;
+pub mod widget_operation;
+pub mod widget_geometry;
+pub mod widget_model;
+pub mod widget_state;
 
-pub mod node_data;
-pub mod gui;
 pub mod font;
+pub mod gui;
+pub mod widget_data;
+pub mod root;
+pub mod widget;
+pub mod label;
 
 #[cfg(test)]
 mod tests {

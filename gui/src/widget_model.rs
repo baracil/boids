@@ -1,5 +1,4 @@
-
-pub struct NodeModel {
+pub struct WidgetModel {
     pub text_style_name: String,
     pub back_style_name: String,
     pub border_style_name: String,
@@ -16,9 +15,7 @@ pub struct NodeModel {
     pub action_id: Option<String>,
 }
 
-
-
-impl NodeModel {
+impl WidgetModel {
     pub(crate) fn new() -> Self {
         Self {
             text_style_name: "default".to_string(),

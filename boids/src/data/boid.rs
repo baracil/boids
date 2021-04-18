@@ -1,5 +1,6 @@
-use crate::data::vector::Vector;
 use std::f32::consts::PI;
+
+use crate::data::vector::Vector;
 
 #[derive(Copy, Clone)]
 pub struct Boid {
@@ -10,7 +11,11 @@ pub struct Boid {
 
 impl Boid {
     pub fn new() -> Self {
-        Boid { position: Vector::new(), velocity: Vector::new(), speed: 0.0 }
+        Boid {
+            position: Vector::new(),
+            velocity: Vector::new(),
+            speed: 0.0,
+        }
     }
 
     pub fn update_speed(&mut self) {

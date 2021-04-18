@@ -58,6 +58,7 @@ version = "0.1.0"
 dependencies = [
  "bitflags",
  "raylib",
+ "tree",
  "uuid",
 ]
 
@@ -139,6 +140,13 @@ dependencies = [
  "cc",
  "cmake",
  "fs_extra",
+]
+
+[[package]]
+name = "tree"
+version = "0.1.0"
+dependencies = [
+ "uuid",
 ]
 
 [[package]]

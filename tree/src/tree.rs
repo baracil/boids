@@ -1,68 +1,90 @@
+use std::borrow::Borrow;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::rc::Rc;
-use std::cell::RefCell;
-use std::process::id;
+
 use uuid::Uuid;
 
-type RefNode<T> = Rc<RefCell<T>>;
-type Registry<T> = HashMap<Uuid,RefNode<T>>;
-type RefRegistry<T> = Rc<RefCell<Registry<T>>>;
+pub type RefNode<T> = Rc<RefCell<T>>;
+pub type Registry<T> = HashMap<Uuid,RefNode<T>>;
+pub type RefRegistry<T> = Rc<RefCell<Registry<T>>>;
 
-pub struct Tree<T> where T: TreeNode<T> {
+pub trait Tree<T> where T : TreeNode<T> {
+    fn registry(&self) -> RefRegistry<T>;
+
+    fn add_node(&mut self, node:RefNode<T>) {
+        node.borrow_mut().tree_data().borrow_mut().tree_registry = Some(self.registry());
+        self.registry().borrow_mut().insert(node.borrow_mut().id().clone(),node.clone());
+    }
+
+}
+
+pub fn create_tree<T>() -> TreeBase<T> where T : TreeNode<T> {
+    return TreeBase::new();
+}
+
+pub struct TreeBase<T> where T: TreeNode<T> {
     registry: RefRegistry<T>,
 }
 
-impl<T> Tree<T> where T: TreeNode<T> {
-    pub fn new() -> Self {
-        Self { registry: Rc::new(RefCell::new(HashMap::new())) }
+impl<T> Tree<T> for TreeBase<T> where T : TreeNode<T> {
+    fn registry(&self) -> RefRegistry<T> {
+        self.registry.clone()
     }
+}
 
-    pub fn add_node(&mut self, node:RefNode<T>) {
-        assert!(node.borrow().tree_data().tree.is_none());
-        node.borrow_mut().tree_data_mut().tree = Some(self.registry.clone());
-
-        self.registry.borrow_mut().insert(node.borrow().id().clone(),node.clone());
+impl<T> TreeBase<T> where T: TreeNode<T> {
+    fn new() -> Self {
+        Self { registry: Rc::new(RefCell::new(HashMap::new())) }
     }
 }
 
 pub trait TreeDataProvider<T> where T: TreeNode<T> {
-    fn tree_data(&self) -> &TreeData<T>;
-    fn tree_data_mut(&mut self) -> &mut TreeData<T>;
+    fn tree_data(&self) -> Rc<RefCell<TreeData<T>>>;
 }
 
-pub trait TreeNode<T>: TreeDataProvider<T> where T: TreeNode<T> {
-    fn id(&self) -> &Uuid;
+pub trait TreeNode<T> : TreeDataProvider<T> where T: TreeNode<T> {
+    fn id(&self) -> Uuid;
     fn parent(&self) -> Option<RefNode<T>>;
-    fn add_child<'a, N>(&mut self, child: &'a mut N) -> Result<&'a mut N, String> where N: TreeNode<T>;
     fn detach(&mut self);
+    fn add_child(&mut self, child: RefNode<T>) -> Result<RefNode<T>, String>;
 }
 
 
 pub struct TreeData<T> where T: TreeNode<T> {
     id: Uuid,
-    tree: Option<RefRegistry<T>>,
+    tree_registry: Option<RefRegistry<T>>,
     parent_id: Option<Uuid>,
     children_id: Vec<Uuid>,
 }
 
 impl<T> TreeData<T> where T: TreeNode<T> {
     pub fn new() -> Self {
-        TreeData { tree: None, id: Uuid::new_v4(), parent_id: None, children_id: vec![] }
+        TreeData { tree_registry: None, id: Uuid::new_v4(), parent_id: None, children_id: vec![] }
     }
 
     fn get_registry(&self) -> RefRegistry<T> {
-        self.tree.as_ref().unwrap().clone()
+        self.tree_registry.as_ref().unwrap().clone()
     }
 
     fn get_node(&self, id:&Uuid) -> Option<RefNode<T>> {
-        self.tree.as_ref().unwrap().borrow().get(id).cloned()
+        match &self.tree_registry {
+            None => panic!("Node not attached to a tree"),
+            Some(p) => {
+                let a:&RefCell<Registry<T>> = p.borrow();
+                a.borrow().get(id).cloned()
+            }
+        }
     }
 
     fn get_parent(&self) -> Option<RefNode<T>> {
         let registry = self.get_registry();
         match &self.parent_id {
             None => None,
-            Some(s) => registry.borrow().get(s).cloned()
+            Some(s) => {
+                let a:&RefCell<Registry<T>> = registry.borrow();
+                a.borrow().get(s).cloned()
+            }
         }
     }
 
@@ -70,13 +92,13 @@ impl<T> TreeData<T> where T: TreeNode<T> {
         self.parent_id = Some(parent_id);
     }
 
-    fn add_child(&mut self, child_id: &Uuid) -> bool {
-        let child = self.get_node(child_id);
+    fn add_child(&mut self, child_id: Uuid) -> bool {
+        let child = self.get_node(&child_id);
         match child {
             None => false,
             Some(rc) => {
                 rc.borrow_mut().detach();
-                rc.borrow_mut().tree_data_mut().set_parent_id(self.id);
+                rc.borrow_mut().tree_data().borrow_mut().set_parent_id(self.id);
                 self.children_id.push(child_id.clone());
                 true
             }
@@ -87,10 +109,10 @@ impl<T> TreeData<T> where T: TreeNode<T> {
         match &self.parent_id {
             None => {}
             Some(p) => {
-                match self.get_registry().borrow().get(p) {
+                match self.get_node(p) {
                     None => {}
                     Some(np) => {
-                        np.borrow_mut().tree_data_mut().children_id.retain(|x| -> bool { *x != self.id });
+                        np.borrow_mut().tree_data().borrow_mut().children_id.retain(|x| -> bool { *x != self.id });
                         self.parent_id = None;
                     }
                 }
@@ -100,23 +122,24 @@ impl<T> TreeData<T> where T: TreeNode<T> {
 }
 
 
-impl<T: TreeNode<T>> TreeNode<T> for T {
-    fn id(&self) -> &Uuid {
-        &self.tree_data().id
+impl<T: TreeDataProvider<T>> TreeNode<T> for T {
+    fn id(&self) -> Uuid {
+        RefCell::borrow(&self.tree_data()).borrow().id
     }
 
     fn parent(&self) -> Option<Rc<RefCell<T>>> {
-        self.tree_data().get_parent()
-    }
-
-    fn add_child<'a, N>(&mut self, child: &'a mut N) -> Result<&'a mut N, String> where N: TreeNode<T> {
-        if self.tree_data_mut().add_child(child.id()) {
-            return Ok(child);
-        }
-        Err(String::from("This child is not part of the tree"))
+        RefCell::borrow(&self.tree_data()).borrow().get_parent()
     }
 
     fn detach(&mut self) {
-        self.tree_data_mut().detach();
+        self.tree_data().borrow_mut().detach();
+    }
+
+    fn add_child(&mut self, child: RefNode<T>) -> Result<RefNode<T>, String> {
+        let ref_cell_node: &RefCell<T> = child.borrow();
+        if self.tree_data().borrow_mut().add_child(ref_cell_node.borrow().id()) {
+            return Ok(child);
+        }
+        Err(String::from("This child is not part of the tree"))
     }
 }
