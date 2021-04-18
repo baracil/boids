@@ -17,7 +17,7 @@ impl<T> Tree<T> where T: TreeNode<T> {
         Self { registry: Rc::new(RefCell::new(HashMap::new())) }
     }
 
-    pub fn add_node<'a>(&mut self, node:RefNode<T>) {
+    pub fn add_node(&mut self, node:RefNode<T>) {
         assert!(node.borrow().tree_data().tree.is_none());
         node.borrow_mut().tree_data_mut().tree = Some(self.registry.clone());
 
