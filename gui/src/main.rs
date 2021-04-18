@@ -1,13 +1,13 @@
 use raylib::prelude::*;
 
-use gui::alignment::Alignment;
-use gui::alignment::HAlignment::{Left, Middle, Right};
-use gui::alignment::VAlignment::{Bottom, Center, Top};
+
+
+
 use gui::gui::create_gui;
 use gui::gui::Gui;
 use gui::label::LabelPar;
 use gui::widget::Widget::Label;
-use gui::widget_operation::{LayoutableWidget, RenderableWidget, WidgetOp};
+
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -54,7 +54,7 @@ fn main() {
         .unwrap();
     let font_info = gui.get_font(id.as_str()).unwrap();
 
-    let label = Label(LabelPar::new(font_info));
+    let _label = Label(LabelPar::new(font_info));
 
     // let mut label = Label::new(font_info);
     // label.set_padding(0.0);

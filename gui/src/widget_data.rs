@@ -22,7 +22,7 @@ impl WidgetData {
         }
     }
 
-    pub fn update(&mut self, mouse_position: &Vector2, mouse_state: &MouseState) {
+    pub fn update(&mut self, _mouse_position: &Vector2, _mouse_state: &MouseState) {
         todo!()
     }
 
@@ -44,8 +44,8 @@ impl WidgetData {
         if self.state.unset_dirty_flag(DirtyFlags::SIZE) {
             return;
         }
-        let mut width;
-        let mut height;
+        let width;
+        let height;
 
         if self.geometry.requested_size.width > 0.0 {
             width = self.geometry.requested_size.width;
