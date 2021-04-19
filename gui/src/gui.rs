@@ -4,11 +4,16 @@ use std::rc::Rc;
 use raylib::{RaylibHandle, RaylibThread};
 use uuid::Uuid;
 
-use tree::tree::{create_tree, RefRegistry, Tree, TreeBase};
+use tree::tree::{create_tree, RefRegistry, Tree, TreeBase, RefNode, create_tree_node};
 
 use crate::font::FontInfo;
 use crate::widget::Widget;
 use raylib::text::FontLoadEx;
+use raylib::drawing::RaylibDrawHandle;
+use std::cell::RefCell;
+use crate::widget_operation::{LayoutableWidget, RenderableWidget};
+use crate::label::LabelPar;
+use crate::widget::Widget::Label;
 
 pub trait Gui : Tree<Widget> {
     /// Load a font and save it internally. Returns
@@ -26,7 +31,11 @@ pub trait Gui : Tree<Widget> {
     fn get_font(&self, font_id: &str) -> Option<FontInfo>;
 
     /// Create a Label
-    fn create_label(&mut self, ) -> Widget;
+    fn create_label(&mut self, f:fn(&mut LabelPar) -> ()) -> RefNode<Widget>;
+
+    fn layout(&mut self);
+
+    fn render(&self, d:&mut RaylibDrawHandle);
 }
 
 pub fn create_gui() -> impl Gui {
@@ -50,6 +59,14 @@ impl InnerGui {
 impl Tree<Widget> for InnerGui {
     fn registry(&self) -> RefRegistry<Widget> {
         self.tree.registry()
+    }
+
+    fn root(&self) -> Option<RefNode<Widget>> {
+        self.tree.root()
+    }
+
+    fn set_root(&mut self, root: RefNode<Widget>) {
+        self.tree.set_root(root.clone());
     }
 }
 
@@ -84,7 +101,24 @@ impl Gui for InnerGui {
             .and_then(|f| -> Option<FontInfo> { Some(f.clone()) })
     }
 
-    fn create_label(&mut self) -> Widget {
-        todo!()
+    fn create_label(&mut self, f:fn(&mut LabelPar) -> ()) -> RefNode<Widget> {
+        let mut par = LabelPar::new();
+        f(&mut par);
+        let l = create_tree_node(Label(par));
+        self.add_node(l.clone());
+        l
+    }
+
+
+    fn layout(&mut self) {
+        if let Some(p) = self.tree.root() {
+            RefCell::borrow_mut(&p).layout()
+        }
+    }
+
+    fn render(&self, d: &mut RaylibDrawHandle<'_>) {
+        if let Some(p) = self.tree.root() {
+            RefCell::borrow(&p).render(d)
+        }
     }
 }

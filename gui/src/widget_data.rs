@@ -80,7 +80,7 @@ impl WidgetData {
     }
 }
 
-impl<N: WidgetBase + SizeableWidget> LayoutableWidget for N {
+impl<N: WidgetDataProvider + SizeableWidget> LayoutableWidget for N {
     fn layout(&mut self) {
         self.widget_data_mut().compute_style();
         let content_size = self.compute_content_size();
@@ -90,13 +90,13 @@ impl<N: WidgetBase + SizeableWidget> LayoutableWidget for N {
     }
 }
 
-impl<N: WidgetBase> UpdatableWidget for N {
+impl<N: WidgetDataProvider> UpdatableWidget for N {
     fn update(&mut self, mouse_position: &Vector2, mouse_state: &MouseState) {
         self.widget_data_mut().update(mouse_position,mouse_state)
     }
 }
 
-pub trait WidgetBase {
+pub trait WidgetDataProvider {
     fn widget_data(&self) -> &WidgetData;
     fn widget_data_mut(&mut self) -> &mut WidgetData;
 }
@@ -104,7 +104,6 @@ pub trait WidgetBase {
 pub trait SizeableWidget {
     fn compute_content_size(&self) -> Size;
 }
-
 
 impl WidgetOp for WidgetData {
 
@@ -120,7 +119,7 @@ impl WidgetOp for WidgetData {
         self.model.padding
     }
 
-    fn set_position(&mut self, point: &Vector2, alignment: Alignment) -> &mut dyn WidgetOp {
+    fn set_position(&mut self, point: &Vector2, alignment: Alignment) -> &mut dyn WidgetOp{
         if self.geometry.target.eq(point) && self.geometry.alignment.eq(&alignment) {
             return self;
         }
@@ -133,7 +132,7 @@ impl WidgetOp for WidgetData {
 
     fn set_padding(&mut self, padding: f32) -> &mut dyn WidgetOp {
         if padding == self.model.padding {
-            return self;
+            return self
         }
         self.model.padding = padding;
         self.state.dirty_flags |= DirtyFlags::SIZE;
@@ -147,7 +146,7 @@ impl WidgetOp for WidgetData {
 
     fn set_requested_height(&mut self, height: f32) -> &mut dyn WidgetOp {
         if height == self.geometry.requested_size.height {
-            return self;
+            return self
         }
         self.geometry.requested_size.height = height;
         self.state.dirty_flags |= DirtyFlags::SIZE;
@@ -169,3 +168,46 @@ impl WidgetOp for WidgetData {
     }
 }
 
+impl<M : WidgetDataProvider> WidgetOp for M {
+    fn content_width(&self) -> f32 {
+        self.widget_data().content_width()
+    }
+
+    fn content_height(&self) -> f32 {
+        self.widget_data().content_height()
+    }
+
+    fn padding(&self) -> f32 {
+        self.widget_data().padding()
+    }
+
+    fn set_position(&mut self, point: &Vector2, alignment: Alignment) -> &mut dyn WidgetOp{
+        self.widget_data_mut().set_position(point,alignment);
+        self
+    }
+
+    fn set_padding(&mut self, padding: f32) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_padding(padding);
+        self
+    }
+
+    fn clear_requested_size(&mut self) -> &mut dyn WidgetOp {
+        self.widget_data_mut().clear_requested_size();
+        self
+    }
+
+    fn set_requested_height(&mut self, height: f32) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_requested_height(height);
+        self
+    }
+
+    fn set_requested_width(&mut self, width: f32) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_requested_width(width);
+        self
+    }
+
+    fn set_requested_size(&mut self, size: Size) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_requested_size(size);
+        self
+    }
+}

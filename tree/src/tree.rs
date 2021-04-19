@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::cell::RefCell;
+use std::cell::{RefCell, Ref};
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -12,11 +12,18 @@ pub type RefRegistry<T> = Rc<RefCell<Registry<T>>>;
 pub trait Tree<T> where T : TreeNode<T> {
     fn registry(&self) -> RefRegistry<T>;
 
+    fn root(&self) -> Option<RefNode<T>>;
+
     fn add_node(&mut self, node:RefNode<T>) {
         node.borrow_mut().tree_data().borrow_mut().tree_registry = Some(self.registry());
         self.registry().borrow_mut().insert(node.borrow_mut().id().clone(),node.clone());
     }
 
+    fn set_root(&mut self, root: RefNode<T>);
+}
+
+pub fn create_tree_node<T>(value:T) -> RefNode<T> {
+    Rc::new(RefCell::new(value))
 }
 
 pub fn create_tree<T>() -> TreeBase<T> where T : TreeNode<T> {
@@ -25,17 +32,26 @@ pub fn create_tree<T>() -> TreeBase<T> where T : TreeNode<T> {
 
 pub struct TreeBase<T> where T: TreeNode<T> {
     registry: RefRegistry<T>,
+    root: Option<RefNode<T>>
 }
 
 impl<T> Tree<T> for TreeBase<T> where T : TreeNode<T> {
     fn registry(&self) -> RefRegistry<T> {
         self.registry.clone()
     }
+
+    fn root(&self) -> Option<RefNode<T>> {
+        self.root.clone()
+    }
+
+    fn set_root(&mut self, root: RefNode<T>) {
+        self.root = Some(root);
+    }
 }
 
 impl<T> TreeBase<T> where T: TreeNode<T> {
     fn new() -> Self {
-        Self { registry: Rc::new(RefCell::new(HashMap::new())) }
+        Self { registry: Rc::new(RefCell::new(HashMap::new())), root:None }
     }
 }
 

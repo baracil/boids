@@ -1,12 +1,18 @@
 use raylib::prelude::*;
 
-
-
-
 use gui::gui::create_gui;
 use gui::gui::Gui;
 use gui::label::LabelPar;
 use gui::widget::Widget::Label;
+use gui::widget_operation::{LayoutableWidget, WidgetOp, RenderableWidget};
+use gui::widget_data::WidgetDataProvider;
+use gui::alignment::Alignment;
+use gui::alignment::VAlignment::Bottom;
+use gui::alignment::HAlignment::Left;
+use tree::tree::{RefNode, create_tree_node};
+use tree::tree::Tree;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 
 fn main() {
@@ -54,20 +60,22 @@ fn main() {
         .unwrap();
     let font_info = gui.get_font(id.as_str()).unwrap();
 
-    let _label = Label(LabelPar::new(font_info));
+    let n = gui.create_label(|x: &mut LabelPar| -> () {
+        x.set_text("Hello".to_owned())
+            .set_padding(0.0)
+            .set_position(
+                &Vector2 { x: 120.0, y: 120.0 },
+                Alignment {
+                    vertical: Bottom,
+                    horizontal: Left,
+                },
+            );
+    });
 
-    // let mut label = Label::new(font_info);
-    // label.set_padding(0.0);
-    // label.set_text(String::from("Hello"));
-    // label.set_position(
-    //     &Vector2 { x: 120.0, y: 120.0 },
-    //     Alignment {
-    //         vertical: Bottom,
-    //         horizontal: Left,
-    //     },
-    // );
-    //
-    // label.layout();
+    gui.set_root(n);
+
+
+    gui.layout();
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
@@ -77,7 +85,7 @@ fn main() {
 
         d.clear_background(Color::WHITE);
 
-        // label.render(&mut d);
+        gui.render(&mut d);
 
         d.draw_line(0, 120, screen_width, 120, Color::RED);
         d.draw_line(120, 0, 120, screen_height, Color::RED);

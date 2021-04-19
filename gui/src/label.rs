@@ -11,17 +11,17 @@ use tree::tree::{TreeData, TreeDataProvider};
 use crate::font::FontInfo;
 
 use crate::widget::Widget;
-use crate::widget_data::{SizeableWidget, WidgetBase, WidgetData};
+use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 
 
-use crate::widget_operation::{RenderableWidget, Size};
+use crate::widget_operation::{RenderableWidget, Size, DirtyFlags};
 
 
 pub struct LabelPar {
     tree_data: Rc<RefCell<TreeData<Widget>>>,
     pub widget_data: WidgetData,
     text: Option<String>,
-    font: FontInfo,
+    font: Option<FontInfo>,
     pub spacing: f32,
     //todo use style to define this value
     pub color: Color, //todo use style to define this value
@@ -29,52 +29,56 @@ pub struct LabelPar {
 
 impl TreeDataProvider<Widget> for LabelPar {
     fn tree_data(&self) -> Rc<RefCell<TreeData<Widget>>> {
-        todo!()
+        self.tree_data.clone()
     }
 }
 
-impl WidgetBase for LabelPar {
+impl WidgetDataProvider for LabelPar {
     fn widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
-
     fn widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
 }
 
 impl LabelPar {
-    pub fn new(font_info: FontInfo) -> Self {
+    pub fn new() -> Self {
         Self {
             tree_data: Rc::new(RefCell::new(TreeData::new())),
             widget_data: WidgetData::new(),
             text: None,
-            font: font_info,
+            font: None,
             spacing: 0.0,
             color: Color::BLACK,
         }
     }
+
+    pub fn set_font(&mut self, font:FontInfo) -> &mut LabelPar {
+        self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
+        self.font = Some(font);
+        self
+    }
+
+    pub fn clear_text(&mut self) -> &mut LabelPar {
+        if let Some(_) = self.text {
+            self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
+            self.text = None;
+        }
+        self
+    }
+
+    pub fn set_text(&mut self, text: String) -> &mut LabelPar {
+        if let Some(txt) = &self.text {
+            if text.eq(txt) {
+                return self;
+            }
+        }
+        self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
+        self.text = Some(text);
+        self
+    }
 }
-//
-//     pub fn clear_text(&mut self) -> &mut Label {
-//         if let Some(_) = self.text {
-//             self.data.set_dirty_flag(DirtyFlags::SIZE);
-//             self.text = None;
-//         }
-//         self
-//     }
-//
-//     pub fn set_text(&mut self, text: String) -> &mut Label {
-//         if let Some(txt) = &self.text {
-//             if text.eq(txt) {
-//                 return self;
-//             }
-//         }
-//         self.data.set_dirty_flag(DirtyFlags::SIZE);
-//         self.text = Some(text);
-//         self
-//     }
-// }
 
 
 impl SizeableWidget for LabelPar {
@@ -84,7 +88,10 @@ impl SizeableWidget for LabelPar {
             Some(text) => text.as_str(),
         };
 
-        self.font.measure_text(text, self.spacing) //TODO use style in self.state to get the spacing
+        match &self.font {
+            None => Size::empty(),
+            Some(f) => f.measure_text(text, self.spacing)
+        }
     }
 }
 
@@ -104,8 +111,10 @@ impl RenderableWidget for LabelPar {
                 x: self.widget_data.geometry.content_layout.x,
                 y: self.widget_data.geometry.content_layout.y,
             };
-            self.font
-                .draw_text(d, text.as_str(), &position, self.spacing, self.color)
+            if let Some(font) = &self.font {
+                font
+                    .draw_text(d, text.as_str(), &position, self.spacing, self.color)
+            }
         }
     }
 }

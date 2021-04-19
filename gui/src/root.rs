@@ -1,4 +1,4 @@
-use crate::widget_data::{WidgetBase, WidgetData};
+use crate::widget_data::{WidgetDataProvider, WidgetData};
 
 pub struct Root {
     data: WidgetData,
@@ -12,7 +12,7 @@ impl Root {
     }
 }
 
-impl WidgetBase for Root {
+impl WidgetDataProvider for Root {
     fn widget_data(&self) -> &WidgetData {
         &self.data
     }
