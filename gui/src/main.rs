@@ -58,11 +58,11 @@ fn main() {
             200,
         )
         .unwrap();
-    let font_info = gui.get_font(id.as_str()).unwrap();
 
-    let n = gui.create_label(|x: &mut LabelPar| -> () {
-        x.set_text("Hello".to_owned())
-            .set_padding(0.0)
+    let n = gui.create_label(|par| -> () {
+        par.set_text("Hello".to_owned())
+            .set_font_id(id)
+            .set_padding(10.0)
             .set_position(
                 &Vector2 { x: 120.0, y: 120.0 },
                 Alignment {
@@ -73,8 +73,6 @@ fn main() {
     });
 
     gui.set_root(n);
-
-
     gui.layout();
 
     while !rl.window_should_close() {

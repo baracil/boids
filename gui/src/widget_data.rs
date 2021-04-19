@@ -6,16 +6,33 @@ use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
 use crate::widget_operation::{DirtyFlags, LayoutableWidget, Size, UpdatableWidget, WidgetOp};
 use crate::widget_state::WidgetState;
+use crate::gui::{Gui, InnerGui, GuiData};
+use std::rc::Rc;
+use std::cell::RefCell;
+use crate::font::FontInfo;
+use uuid::Uuid;
+use raylib::prelude::Color;
+use raylib::drawing::RaylibDrawHandle;
 
 pub struct WidgetData {
+    pub gui:Rc<RefCell<GuiData>>,
     pub state: WidgetState,
     pub geometry: WidgetGeometry,
     pub model: WidgetModel,
 }
 
 impl WidgetData {
-    pub fn new() -> Self {
+    pub fn measure_text(&self, font_id:&Uuid, text: &str, spacing: f32) -> Size {
+        RefCell::borrow(&self.gui).measure_text(font_id,text,spacing)
+    }
+
+    pub fn draw_text(&self, d:&mut RaylibDrawHandle,font_id:&Uuid,text:&str, position:&Vector2, spacing:f32, color:Color) {
+        RefCell::borrow(&self.gui).draw_text(d,font_id,text,position,spacing,color);
+    }
+
+    pub fn new(gui:Rc<RefCell<GuiData>>) -> Self {
         Self {
+            gui:gui.clone(),
             state: WidgetState::new(),
             geometry: WidgetGeometry::new(),
             model: WidgetModel::new(),

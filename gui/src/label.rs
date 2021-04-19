@@ -15,16 +15,18 @@ use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 
 
 use crate::widget_operation::{RenderableWidget, Size, DirtyFlags};
+use crate::gui::{InnerGui, GuiData};
+use uuid::Uuid;
 
 
 pub struct LabelPar {
     tree_data: Rc<RefCell<TreeData<Widget>>>,
-    pub widget_data: WidgetData,
+    widget_data: WidgetData,
     text: Option<String>,
-    font: Option<FontInfo>,
-    pub spacing: f32,
+    font_id: Option<Uuid>,
+    spacing: f32,
     //todo use style to define this value
-    pub color: Color, //todo use style to define this value
+    color: Color, //todo use style to define this value
 }
 
 impl TreeDataProvider<Widget> for LabelPar {
@@ -43,20 +45,20 @@ impl WidgetDataProvider for LabelPar {
 }
 
 impl LabelPar {
-    pub fn new() -> Self {
+    pub fn new(gui:Rc<RefCell<GuiData>>) -> Self {
         Self {
             tree_data: Rc::new(RefCell::new(TreeData::new())),
-            widget_data: WidgetData::new(),
+            widget_data: WidgetData::new(gui),
             text: None,
-            font: None,
+            font_id: None,
             spacing: 0.0,
             color: Color::BLACK,
         }
     }
 
-    pub fn set_font(&mut self, font:FontInfo) -> &mut LabelPar {
+    pub fn set_font_id(&mut self, font_id:Uuid) -> &mut LabelPar {
         self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
-        self.font = Some(font);
+        self.font_id = Some(font_id);
         self
     }
 
@@ -88,9 +90,9 @@ impl SizeableWidget for LabelPar {
             Some(text) => text.as_str(),
         };
 
-        match &self.font {
+        match &self.font_id {
             None => Size::empty(),
-            Some(f) => f.measure_text(text, self.spacing)
+            Some(f) => self.widget_data.measure_text(f, text, self.spacing)
         }
     }
 }
@@ -111,9 +113,8 @@ impl RenderableWidget for LabelPar {
                 x: self.widget_data.geometry.content_layout.x,
                 y: self.widget_data.geometry.content_layout.y,
             };
-            if let Some(font) = &self.font {
-                font
-                    .draw_text(d, text.as_str(), &position, self.spacing, self.color)
+            if let Some(font_id) = &self.font_id {
+                self.widget_data.draw_text(d,font_id,text.as_str(), &position, self.spacing, self.color)
             }
         }
     }

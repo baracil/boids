@@ -12,7 +12,6 @@ pub mod widget_state;
 pub mod font;
 pub mod gui;
 pub mod widget_data;
-pub mod root;
 pub mod widget;
 pub mod label;
 

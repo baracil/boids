@@ -3,6 +3,8 @@ use std::rc::Rc;
 use raylib::prelude::*;
 
 use crate::widget_operation::Size;
+use std::cell::RefCell;
+use crate::gui::GuiData;
 
 #[derive(Clone)]
 pub struct FontInfo {
