@@ -4,7 +4,7 @@ use gui::gui::create_gui;
 use gui::gui::Gui;
 
 
-use gui::widget_operation::{LayoutableWidget, WidgetOp, RenderableWidget};
+use gui::widget_operation::{WidgetOp};
 
 use gui::alignment::Alignment;
 use gui::alignment::VAlignment::Bottom;

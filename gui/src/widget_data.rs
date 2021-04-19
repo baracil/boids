@@ -88,13 +88,6 @@ impl WidgetData {
         self.geometry.compute_content_position();
     }
 
-    fn layout(&mut self, sizeable_node: &dyn SizeableWidget) {
-        self.compute_style();
-        let content_size = sizeable_node.compute_content_size();
-        self.geometry.content_size = content_size;
-        self.compute_item_size();
-        self.compute_position();
-    }
 }
 
 impl<N: WidgetDataProvider + SizeableWidget> LayoutableWidget for N {
