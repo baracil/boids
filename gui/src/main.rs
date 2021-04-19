@@ -24,32 +24,9 @@ fn main() {
         .title("Hello, World")
         .build();
 
-    // let gui : Gui;
-    //
-
-    //
-    // let menu = gui.create_menu();
-    //
-    // gui.create_button(gui.create_label(""), gui.create_icon());
-    //
-    // menu.add_item(gui.create_button("Level Editor", font_id));
-    // menu.add_item(gui.create_button("Level Editor", font_id));
-    //
-    //
-    // let grid = gui.create_grid(nb_rows, nb_cols);
-    // grid.add_item(item,0,0);
-    //
-    // let label = gui.create_label("Hello",font_id);
-    //
-    //    let font = rl.get_font_default();
-    //
-
-    //        let font = rl.load_font_ex(&thread,"/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",48,FontLoadEx::Default(200)).unwrap();
-    //    let font = rl.load_font_ex(&thread,"/home/Bastien Aracil/Downloads/pixantiqua.ttf",48,FontLoadEx::Default(80)).unwrap();
-
     let mut gui = create_gui();
 
-    let id = gui
+    let font_id = gui
         .load_font(
             &mut rl,
             &thread,
@@ -61,7 +38,7 @@ fn main() {
 
     let n = gui.create_label(|par| -> () {
         par.set_text("Hello".to_owned())
-            .set_font_id(id)
+            .set_font_id(font_id)
             .set_padding(10.0)
             .set_position(
                 &Vector2 { x: 120.0, y: 120.0 },
