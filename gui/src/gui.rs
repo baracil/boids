@@ -8,7 +8,7 @@ use tree::tree::{create_tree, RefRegistry, Tree, TreeBase, RefNode, create_tree_
 
 use crate::font::FontInfo;
 use crate::widget::Widget;
-use raylib::prelude::{FontLoadEx, measure_text_ex, Color, Vector2};
+use raylib::prelude::{FontLoadEx, Color, Vector2};
 use raylib::drawing::RaylibDrawHandle;
 use std::cell::RefCell;
 use crate::widget_operation::{LayoutableWidget, RenderableWidget, Size};

@@ -6,10 +6,10 @@ use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
 use crate::widget_operation::{DirtyFlags, LayoutableWidget, Size, UpdatableWidget, WidgetOp};
 use crate::widget_state::WidgetState;
-use crate::gui::{Gui, InnerGui, GuiData};
+use crate::gui::{GuiData};
 use std::rc::Rc;
 use std::cell::RefCell;
-use crate::font::FontInfo;
+
 use uuid::Uuid;
 use raylib::prelude::Color;
 use raylib::drawing::RaylibDrawHandle;

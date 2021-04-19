@@ -2,17 +2,17 @@ use raylib::prelude::*;
 
 use gui::gui::create_gui;
 use gui::gui::Gui;
-use gui::label::LabelPar;
-use gui::widget::Widget::Label;
+
+
 use gui::widget_operation::{LayoutableWidget, WidgetOp, RenderableWidget};
-use gui::widget_data::WidgetDataProvider;
+
 use gui::alignment::Alignment;
 use gui::alignment::VAlignment::Bottom;
 use gui::alignment::HAlignment::Left;
-use tree::tree::{RefNode, create_tree_node};
+
 use tree::tree::Tree;
-use std::cell::RefCell;
-use std::rc::Rc;
+
+
 
 
 fn main() {

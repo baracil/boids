@@ -8,14 +8,14 @@ use raylib::prelude::*;
 use tree::tree::{TreeData, TreeDataProvider};
 
 
-use crate::font::FontInfo;
+
 
 use crate::widget::Widget;
 use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 
 
 use crate::widget_operation::{RenderableWidget, Size, DirtyFlags};
-use crate::gui::{InnerGui, GuiData};
+use crate::gui::{GuiData};
 use uuid::Uuid;
 
 
