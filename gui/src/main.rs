@@ -26,18 +26,14 @@ fn main() {
 
     let mut gui = create_gui();
 
-    let font_id = gui
-        .load_font(
-            &mut rl,
-            &thread,
+    let font_id = gui.load_font(&mut rl, &thread,
             "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",
             48,
             200,
-        )
-        .unwrap();
+        ).unwrap();
 
     let n = gui.create_label(|par| -> () {
-        par.set_text("Hello".to_owned())
+        par.set_text(String::from("Hello"))
             .set_font_id(font_id)
             .set_padding(10.0)
             .set_position(
