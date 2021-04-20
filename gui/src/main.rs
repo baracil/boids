@@ -1,18 +1,17 @@
 use raylib::prelude::*;
 
-use gui::gui::create_gui;
 use gui::gui::Gui;
 
 
-use gui::widget_operation::{WidgetOp};
+use gui::widget_operation::{WidgetOp, Size};
 
 use gui::alignment::Alignment;
-use gui::alignment::VAlignment::Bottom;
-use gui::alignment::HAlignment::Left;
+use gui::alignment::VAlignment::{Bottom, Top};
+use gui::alignment::HAlignment::{Left, Right};
 
-use tree::tree::Tree;
-
-
+use gui::widget_data::WidgetDataProvider;
+use gui::widget::Widget::Pane;
+use gui::pane::PanePar;
 
 
 fn main() {
@@ -24,7 +23,13 @@ fn main() {
         .title("Hello, World")
         .build();
 
-    let mut gui = create_gui();
+    let mut gui = Gui::new(|d| {
+        let mut par = PanePar::new(d);
+        par.set_fill_height(true)
+            .set_requested_width(200.0)
+            .set_position(0.0,0.0);
+        Pane(par)
+    });
 
     let font_id = gui.load_font(&mut rl, &thread,
             "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",
@@ -32,33 +37,24 @@ fn main() {
             200,
         ).unwrap();
 
-    let n = gui.create_label(|par| -> () {
-        par.set_text(String::from("Hello"))
-            .set_font_id(font_id)
-            .set_padding(10.0)
-            .set_position(
-                &Vector2 { x: 120.0, y: 120.0 },
-                Alignment {
-                    vertical: Bottom,
-                    horizontal: Left,
-                },
-            );
-    });
-
-    gui.set_root(n);
-    gui.layout();
+    let mut screen_size:Size = Size{width:rl.get_screen_width() as f32, height:rl.get_screen_height() as f32};
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
 
-        let screen_width = d.get_screen_width();
-        let screen_height = d.get_screen_height();
+        if d.is_window_resized() {
+            screen_size = Size{width:d.get_screen_width() as f32, height:d.get_screen_height() as f32};
+        }
+
+        gui.layout(&screen_size);
+
+
 
         d.clear_background(Color::WHITE);
 
         gui.render(&mut d);
 
-        d.draw_line(0, 120, screen_width, 120, Color::RED);
-        d.draw_line(120, 0, 120, screen_height, Color::RED);
+        d.draw_line(0, 120, screen_size.width as i32, 120, Color::RED);
+        d.draw_line(120, 0, 120, screen_size.height as i32, Color::RED);
     }
 }

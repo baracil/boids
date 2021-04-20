@@ -1,2 +1,2 @@
 [workspace]
-members = ["boids","tree","gui"]
+members = ["boids","gui","tree"]

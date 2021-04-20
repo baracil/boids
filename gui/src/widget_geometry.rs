@@ -8,6 +8,12 @@ pub struct WidgetGeometry {
     pub alignment: Alignment, //alignment to the target
     pub requested_size: Size, //requested size of the node
 
+    pub fill_height_weight:u32,
+    pub fill_height:bool,
+
+    pub fill_width_weight:u32,
+    pub fill_width:bool,
+
     pub content_size: Size, //size of the content
     pub item_size: Size,    // size of the item
 
@@ -24,10 +30,11 @@ impl WidgetGeometry {
             content_layout: Default::default(),
             content_size: Size::empty(),
             item_size: Size::empty(),
-            requested_size: Size {
-                width: -1.0,
-                height: -1.0,
-            },
+            requested_size: Size::empty(),
+            fill_height:false,
+            fill_width:false,
+            fill_height_weight:1,
+            fill_width_weight:1,
         }
     }
 

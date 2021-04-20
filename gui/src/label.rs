@@ -5,8 +5,6 @@ use raylib::color::Color;
 use raylib::core::drawing::RaylibDrawHandle;
 use raylib::prelude::*;
 
-use tree::tree::{TreeData, TreeDataProvider};
-
 
 
 
@@ -15,25 +13,19 @@ use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 
 
 use crate::widget_operation::{RenderableWidget, Size, DirtyFlags};
-use crate::gui::{GuiData};
+use crate::gui::{GuiData, RefGuiData};
 use uuid::Uuid;
-
+use generational_arena::Index;
 
 pub struct LabelPar {
-    tree_data: Rc<RefCell<TreeData<Widget>>>,
     widget_data: WidgetData,
     text: Option<String>,
-    font_id: Option<Uuid>,
+    font_id: Option<Index>,
     spacing: f32,
     //todo use style to define this value
     color: Color, //todo use style to define this value
 }
 
-impl TreeDataProvider<Widget> for LabelPar {
-    fn tree_data(&self) -> Rc<RefCell<TreeData<Widget>>> {
-        self.tree_data.clone()
-    }
-}
 
 impl WidgetDataProvider for LabelPar {
     fn widget_data(&self) -> &WidgetData {
@@ -45,10 +37,9 @@ impl WidgetDataProvider for LabelPar {
 }
 
 impl LabelPar {
-    pub fn new(gui:Rc<RefCell<GuiData>>) -> Self {
+    pub fn new(gui_data:RefGuiData) -> Self {
         Self {
-            tree_data: Rc::new(RefCell::new(TreeData::new())),
-            widget_data: WidgetData::new(gui),
+            widget_data: WidgetData::new(gui_data),
             text: None,
             font_id: None,
             spacing: 0.0,
@@ -56,7 +47,7 @@ impl LabelPar {
         }
     }
 
-    pub fn set_font_id(&mut self, font_id:Uuid) -> &mut LabelPar {
+    pub fn set_font_id(&mut self, font_id:Index) -> &mut LabelPar {
         self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
         self.font_id = Some(font_id);
         self
@@ -84,15 +75,15 @@ impl LabelPar {
 
 
 impl SizeableWidget for LabelPar {
-    fn compute_content_size(&self) -> Size {
+    fn compute_content_size(&self, available_size:&Size) -> Size {
         let text = match &self.text {
             None => "",
             Some(text) => text.as_str(),
         };
 
-        match &self.font_id {
+        match self.font_id {
             None => Size::empty(),
-            Some(f) => self.widget_data.measure_text(f, text, self.spacing)
+            Some(f) => self.widget_data.gui_data.borrow().measure_text(f, text, self.spacing)
         }
     }
 }
@@ -113,8 +104,8 @@ impl RenderableWidget for LabelPar {
                 x: self.widget_data.geometry.content_layout.x,
                 y: self.widget_data.geometry.content_layout.y,
             };
-            if let Some(font_id) = &self.font_id {
-                self.widget_data.draw_text(d,font_id,text.as_str(), &position, self.spacing, self.color)
+            if let Some(font_id) = self.font_id {
+                self.widget_data.gui_data.borrow().draw_text(d,font_id,text.as_str(), &position, self.spacing, self.color)
             }
         }
     }

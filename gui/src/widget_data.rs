@@ -1,42 +1,60 @@
 use raylib::math::Vector2;
 
-use crate::alignment::Alignment;
+use crate::alignment::{Alignment, HAlignment, VAlignment};
 use crate::mouse::MouseState;
 use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
 use crate::widget_operation::{DirtyFlags, LayoutableWidget, Size, UpdatableWidget, WidgetOp};
 use crate::widget_state::WidgetState;
-use crate::gui::{GuiData};
-use std::rc::Rc;
+use std::rc::{Rc, Weak};
 use std::cell::RefCell;
 
 use uuid::Uuid;
 use raylib::prelude::Color;
 use raylib::drawing::RaylibDrawHandle;
+use crate::widget::Widget;
+use generational_arena::Index;
+use std::mem::take;
+use crate::gui::{Gui, GuiData, RefGuiData};
 
 pub struct WidgetData {
-    pub gui:Rc<RefCell<GuiData>>,
+    pub gui_data: Option<RefGuiData>,
     pub state: WidgetState,
     pub geometry: WidgetGeometry,
     pub model: WidgetModel,
 }
 
 impl WidgetData {
-    pub fn measure_text(&self, font_id:&Uuid, text: &str, spacing: f32) -> Size {
-        RefCell::borrow(&self.gui).measure_text(font_id,text,spacing)
-    }
 
-    pub fn draw_text(&self, d:&mut RaylibDrawHandle,font_id:&Uuid,text:&str, position:&Vector2, spacing:f32, color:Color) {
-        RefCell::borrow(&self.gui).draw_text(d,font_id,text,position,spacing,color);
-    }
-
-    pub fn new(gui:Rc<RefCell<GuiData>>) -> Self {
+    pub fn new(gui_data:RefGuiData) -> Self {
         Self {
-            gui:gui.clone(),
+            gui_data,
             state: WidgetState::new(),
             geometry: WidgetGeometry::new(),
             model: WidgetModel::new(),
         }
+    }
+
+    pub fn is_fill_width(&self) -> bool {
+        self.geometry.fill_width
+    }
+
+    pub fn is_fill_height(&self) -> bool {
+        self.geometry.fill_height
+    }
+
+    pub fn fill_width_weight(&self) -> u32 {
+        if self.geometry.fill_width {
+            return self.geometry.fill_width_weight;
+        }
+        return 0;
+    }
+
+    pub fn fill_height_weight(&self) -> u32 {
+        if self.geometry.fill_height {
+            return self.geometry.fill_height_weight;
+        }
+        return 0;
     }
 
     pub fn update(&mut self, _mouse_position: &Vector2, _mouse_state: &MouseState) {
@@ -55,6 +73,7 @@ impl WidgetData {
         if self.state.unset_dirty_flag(DirtyFlags::STYLE) {
             return;
         }
+        self.set_dirty_flag(DirtyFlags::CONTENT_SIZE)
     }
 
     fn compute_item_size(&mut self) {
@@ -76,7 +95,8 @@ impl WidgetData {
             height = self.geometry.content_size.height + 2.0 * self.model.padding;
         }
         self.geometry.item_size.width = width;
-        self.geometry.item_size.height = height
+        self.geometry.item_size.height = height;
+        self.set_dirty_flag(DirtyFlags::POSITION)
     }
 
     fn compute_position(&mut self) {
@@ -87,22 +107,54 @@ impl WidgetData {
         self.geometry.compute_item_position();
         self.geometry.compute_content_position();
     }
-
 }
 
 impl<N: WidgetDataProvider + SizeableWidget> LayoutableWidget for N {
-    fn layout(&mut self) {
-        self.widget_data_mut().compute_style();
-        let content_size = self.compute_content_size();
-        self.widget_data_mut().geometry.content_size = content_size;
-        self.widget_data_mut().compute_item_size();
-        self.widget_data_mut().compute_position();
+    fn layout(&mut self, available_size: &Size) {
+        {
+            self.widget_data().gui_data
+        }
+//         {
+// //            compute_tree_style(&self.myself());
+//         }
+//
+//         {
+//             let children = self.children();
+//             let mut sum_width_weight: u32 = 0;
+//             let mut sum_height_weight: u32 = 0;
+//             let mut used_width = 0.0;
+//             let mut used_height = 0.0;
+//             for child in children {
+//                 // let data = child.borrow().widget_data();
+//                 // sum_height_weight = data.fill_height_weight();
+//                 // sum_width_weight = data.fill_width_weight();
+//             }
+//         }
+//
+//         if !self.widget_data_mut().unset_dirty_flag(DirtyFlags::CONTENT_SIZE) {
+//             let content_size = self.compute_content_size(available_size);
+//             self.widget_data_mut().geometry.content_size = content_size;
+//         }
+//
+//         self.widget_data_mut().compute_item_size();
+//         self.widget_data_mut().compute_position();
     }
 }
 
+// pub fn compute_tree_style(node: &RefNode<Widget>) {
+//     let mut bn = node.borrow_mut();
+//
+//     bn.widget_data_mut()
+//         .compute_style();
+//     for child in node.children() {
+//         compute_tree_style(&child)
+//     }
+// }
+//
+
 impl<N: WidgetDataProvider> UpdatableWidget for N {
     fn update(&mut self, mouse_position: &Vector2, mouse_state: &MouseState) {
-        self.widget_data_mut().update(mouse_position,mouse_state)
+        self.widget_data_mut().update(mouse_position, mouse_state)
     }
 }
 
@@ -112,11 +164,10 @@ pub trait WidgetDataProvider {
 }
 
 pub trait SizeableWidget {
-    fn compute_content_size(&self) -> Size;
+    fn compute_content_size(&self, available_size: &Size) -> Size;
 }
 
 impl WidgetOp for WidgetData {
-
     fn content_width(&self) -> f32 {
         self.geometry.content_size.width
     }
@@ -129,37 +180,54 @@ impl WidgetOp for WidgetData {
         self.model.padding
     }
 
-    fn set_position(&mut self, point: &Vector2, alignment: Alignment) -> &mut dyn WidgetOp{
-        if self.geometry.target.eq(point) && self.geometry.alignment.eq(&alignment) {
+    fn set_position(&mut self, x: f32, y: f32) -> &mut dyn WidgetOp {
+        if self.geometry.target.x.eq(&x) && self.geometry.target.y.eq(&y) {
             return self;
         }
-        self.geometry.alignment = alignment;
-        self.geometry.target.x = point.x;
-        self.geometry.target.y = point.y;
-        self.state.dirty_flags |= DirtyFlags::POSITION;
+        self.geometry.target.x = x;
+        self.geometry.target.y = y;
+        self
+    }
+
+    fn set_valignment(&mut self, valignment: VAlignment) -> &mut dyn WidgetOp {
+        if self.geometry.alignment.vertical.eq(&valignment) {
+            return self;
+        }
+        self.geometry.alignment.vertical = valignment;
+        self.set_dirty_flag(DirtyFlags::POSITION);
+        self
+    }
+
+    fn set_halignment(&mut self, halignment: HAlignment) -> &mut dyn WidgetOp {
+        if self.geometry.alignment.horizontal.eq(&halignment) {
+            return self;
+        }
+        self.geometry.alignment.horizontal = halignment;
+        self.set_dirty_flag(DirtyFlags::POSITION);
         self
     }
 
     fn set_padding(&mut self, padding: f32) -> &mut dyn WidgetOp {
         if padding == self.model.padding {
-            return self
+            return self;
         }
         self.model.padding = padding;
-        self.state.dirty_flags |= DirtyFlags::SIZE;
+        self.set_dirty_flag(DirtyFlags::SIZE);
         self
     }
 
     fn clear_requested_size(&mut self) -> &mut dyn WidgetOp {
         self.geometry.requested_size = Size::empty();
+        self.set_dirty_flag(DirtyFlags::SIZE);
         self
     }
 
     fn set_requested_height(&mut self, height: f32) -> &mut dyn WidgetOp {
         if height == self.geometry.requested_size.height {
-            return self
+            return self;
         }
         self.geometry.requested_size.height = height;
-        self.state.dirty_flags |= DirtyFlags::SIZE;
+        self.set_dirty_flag(DirtyFlags::SIZE);
         self
     }
 
@@ -168,7 +236,7 @@ impl WidgetOp for WidgetData {
             return self;
         }
         self.geometry.requested_size.width = width;
-        self.state.dirty_flags |= DirtyFlags::SIZE;
+        self.set_dirty_flag(DirtyFlags::SIZE);
         self
     }
 
@@ -176,9 +244,45 @@ impl WidgetOp for WidgetData {
         self.set_requested_width(size.width);
         self.set_requested_height(size.height)
     }
+
+    fn set_fill_width(&mut self, fill: bool) -> &mut dyn WidgetOp {
+        if fill == self.geometry.fill_width {
+            return self;
+        }
+        self.geometry.fill_width = fill;
+        self.set_dirty_flag(DirtyFlags::CONTENT_SIZE);
+        self
+    }
+
+    fn set_fill_height(&mut self, fill: bool) -> &mut dyn WidgetOp {
+        if fill == self.geometry.fill_height {
+            return self;
+        }
+        self.geometry.fill_height = fill;
+        self.set_dirty_flag(DirtyFlags::CONTENT_SIZE);
+        self
+    }
+
+    fn set_fill_width_weight(&mut self, weight: u32) -> &mut dyn WidgetOp {
+        if weight == self.geometry.fill_width_weight {
+            return self;
+        }
+        self.geometry.fill_width_weight = weight;
+        self.set_dirty_flag(DirtyFlags::CONTENT_SIZE);
+        self
+    }
+
+    fn set_fill_height_weight(&mut self, weight: u32) -> &mut dyn WidgetOp {
+        if weight == self.geometry.fill_height_weight {
+            return self;
+        }
+        self.geometry.fill_height_weight = weight;
+        self.set_dirty_flag(DirtyFlags::CONTENT_SIZE);
+        self
+    }
 }
 
-impl<M : WidgetDataProvider> WidgetOp for M {
+impl<M: WidgetDataProvider> WidgetOp for M {
     fn content_width(&self) -> f32 {
         self.widget_data().content_width()
     }
@@ -191,33 +295,51 @@ impl<M : WidgetDataProvider> WidgetOp for M {
         self.widget_data().padding()
     }
 
-    fn set_position(&mut self, point: &Vector2, alignment: Alignment) -> &mut dyn WidgetOp{
-        self.widget_data_mut().set_position(point,alignment);
-        self
+    fn set_position(&mut self, x: f32, y: f32) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_position(x,y)
+    }
+
+    fn set_valignment(&mut self, valignment: VAlignment) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_valignment(valignment)
+    }
+
+    fn set_halignment(&mut self, halignment: HAlignment) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_halignment(halignment)
     }
 
     fn set_padding(&mut self, padding: f32) -> &mut dyn WidgetOp {
-        self.widget_data_mut().set_padding(padding);
-        self
+        self.widget_data_mut().set_padding(padding)
     }
 
     fn clear_requested_size(&mut self) -> &mut dyn WidgetOp {
-        self.widget_data_mut().clear_requested_size();
-        self
+        self.widget_data_mut().clear_requested_size()
     }
 
     fn set_requested_height(&mut self, height: f32) -> &mut dyn WidgetOp {
-        self.widget_data_mut().set_requested_height(height);
-        self
+        self.widget_data_mut().set_requested_height(height)
     }
 
     fn set_requested_width(&mut self, width: f32) -> &mut dyn WidgetOp {
-        self.widget_data_mut().set_requested_width(width);
-        self
+        self.widget_data_mut().set_requested_width(width)
     }
 
     fn set_requested_size(&mut self, size: Size) -> &mut dyn WidgetOp {
-        self.widget_data_mut().set_requested_size(size);
-        self
+        self.widget_data_mut().set_requested_size(size)
+    }
+
+    fn set_fill_width(&mut self, fill: bool) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_fill_width(fill)
+    }
+
+    fn set_fill_height(&mut self, fill: bool) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_fill_height(fill)
+    }
+
+    fn set_fill_width_weight(&mut self, weight: u32) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_fill_width_weight(weight)
+    }
+
+    fn set_fill_height_weight(&mut self, weight: u32) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_fill_height_weight(weight)
     }
 }

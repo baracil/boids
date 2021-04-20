@@ -3,16 +3,21 @@ use std::rc::Rc;
 use raylib::prelude::*;
 
 use crate::widget_operation::Size;
-
+use generational_arena::Index;
 
 
 #[derive(Clone)]
 pub struct FontInfo {
     pub font: Rc<Font>,
-    pub size: i32,
+    pub size: f32,
 }
 
 impl FontInfo {
+
+    pub fn new(font:Font, size:i32) -> Self {
+        Self{font:Rc::new(font),size:size as f32}
+    }
+
     /// Measure the provided text with this font information
     /// # Arguments
     ///

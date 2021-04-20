@@ -2,7 +2,7 @@
 use raylib::math::{Rectangle, Vector2};
 use raylib::prelude::*;
 
-use crate::alignment::Alignment;
+use crate::alignment::{Alignment, VAlignment, HAlignment};
 use crate::mouse::MouseState;
 
 bitflags! {
@@ -57,7 +57,21 @@ pub trait WidgetOp {
     }
 
     /// set the position of this node
-    fn set_position(&mut self, point: &Vector2, alignment: Alignment) -> &mut dyn WidgetOp;
+    fn set_position_vec(&mut self, point: &Vector2, valignment: VAlignment, halignment: HAlignment) -> &mut dyn WidgetOp {
+        self.set_position(point.x,point.y);
+        self.set_valignment(valignment);
+        self.set_halignment(halignment)
+    }
+
+    fn set_position_ex(&mut self, x: f32, y:f32, valignment: VAlignment, halignment: HAlignment) -> &mut dyn WidgetOp {
+        self.set_position(x,y);
+        self.set_valignment(valignment);
+        self.set_halignment(halignment)
+    }
+
+    fn set_position(&mut self, x: f32, y:f32) -> &mut dyn WidgetOp;
+    fn set_valignment(&mut self, valignment: VAlignment) -> &mut dyn WidgetOp;
+    fn set_halignment(&mut self, halignment: HAlignment) -> &mut dyn WidgetOp;
 
     fn set_padding(&mut self, padding: f32) -> &mut dyn WidgetOp;
 
@@ -65,11 +79,18 @@ pub trait WidgetOp {
     fn set_requested_height(&mut self, height: f32) -> &mut dyn WidgetOp;
     fn set_requested_width(&mut self, width: f32) -> &mut dyn WidgetOp;
     fn set_requested_size(&mut self, size: Size) -> &mut dyn WidgetOp;
+
+    fn set_fill_width(&mut self, fill:bool) -> &mut dyn WidgetOp;
+    fn set_fill_height(&mut self, fill:bool) -> &mut dyn WidgetOp;
+
+    fn set_fill_width_weight(&mut self, weight:u32) -> &mut dyn WidgetOp;
+    fn set_fill_height_weight(&mut self, weight:u32) -> &mut dyn WidgetOp;
+
 }
 
 pub trait LayoutableWidget {
     /// compute size and position of the node
-    fn layout(&mut self);
+    fn layout(&mut self, available_space:&Size);
 }
 
 pub trait UpdatableWidget {

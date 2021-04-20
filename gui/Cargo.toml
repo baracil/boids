@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 raylib = "3.5.0"
 bitflags = "1.2.1"
+generational-arena = "0.2.8"
 uuid = {version="0.8.2", features = ["v4"]}
-
-tree = {path = "../tree"}
+ego-tree = "0.6.2"

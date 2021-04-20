@@ -14,6 +14,7 @@ pub mod gui;
 pub mod widget_data;
 pub mod widget;
 pub mod label;
+pub mod pane;
 
 #[cfg(test)]
 mod tests {
