@@ -11,4 +11,5 @@ raylib = "3.5.0"
 bitflags = "1.2.1"
 generational-arena = "0.2.8"
 uuid = {version="0.8.2", features = ["v4"]}
-ego-tree = "0.6.2"
+#ego-tree = "0.6.2"
+vec-tree = "0.1.2"

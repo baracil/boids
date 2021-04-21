@@ -17,7 +17,7 @@ impl WidgetState {
         }
     }
 
-    pub fn unset_dirty_flag(&mut self, flag: DirtyFlags) -> bool {
+    pub fn dirty_flag_clean(&mut self, flag: DirtyFlags) -> bool {
         let mut dirty = self.dirty_flags;
         if (dirty & flag).is_empty() {
             return true;

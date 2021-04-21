@@ -23,11 +23,13 @@ fn main() {
         .title("Hello, World")
         .build();
 
-    let mut gui = Gui::new(|d| {
+    let (mut gui,ri) = Gui::new(|d| {
         let mut par = PanePar::new(d);
         par.set_fill_height(true)
             .set_requested_width(200.0)
-            .set_position(0.0,0.0);
+            .set_position(0.0,0.0)
+            .set_valignment(Top)
+            .set_halignment(Left);
         Pane(par)
     });
 
@@ -36,6 +38,8 @@ fn main() {
             48,
             200,
         ).unwrap();
+
+
 
     let mut screen_size:Size = Size{width:rl.get_screen_width() as f32, height:rl.get_screen_height() as f32};
 

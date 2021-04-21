@@ -9,31 +9,37 @@ use crate::widget::Widget;
 use raylib::prelude::{FontLoadEx, Color, Vector2};
 use raylib::drawing::RaylibDrawHandle;
 use std::cell::{RefCell, Cell};
-use crate::widget_operation::{LayoutableWidget, RenderableWidget, Size};
+use crate::widget_operation::{LayoutableWidget, RenderableWidget, Size, DirtyFlags};
 use crate::label::LabelPar;
 use crate::widget::Widget::{Label, Pane};
 use crate::pane::PanePar;
-use ego_tree::Tree;
 use generational_arena::{Arena, Index};
 use raylib::core::text::Font;
-use crate::widget_data::{WidgetData, WidgetDataProvider};
+use crate::widget_data::{WidgetData, WidgetDataProvider, SizeableWidget};
+use vec_tree::VecTree;
 
 pub type RefGuiData = Rc<RefCell<GuiData>>;
 
 pub struct Gui {
     gui_data: RefGuiData,
-    tree: Tree<Widget>,
+    tree: VecTree<Widget>,
 }
 
 
 impl Gui {
-    pub fn new(root_creator: impl FnOnce(RefGuiData) -> Widget) -> Gui {
+    pub fn new(root_create: impl FnOnce(RefGuiData) -> Widget) -> (Gui, Index) {
         let gui_data = Rc::new(RefCell::new(GuiData::new()));
-        let root = root_creator(gui_data.clone());
-        return Gui {
-            tree: Tree::new(root),
+        let mut tree = VecTree::new();
+        let root = root_create(gui_data.clone());
+        let root_index = tree.insert_root(root);
+        return (Gui {
+            tree,
             gui_data,
-        };
+        }, root_index);
+    }
+
+    pub fn insert_root(&mut self, root: Widget) -> Index {
+        self.tree.insert_root(root)
     }
 
     ///
@@ -68,13 +74,35 @@ impl Gui {
 
 
     pub fn layout(&mut self, available_size: &Size) {
-        let mut root = self.tree.root_mut();
-        root.value().layout(available_size);
+        if let Some(index) = self.tree.get_root_index() {
+            self.layout_rec(index, available_size)
+        }
     }
 
+    fn layout_rec(&mut self, mut node: Index, available_size: &Size) {
+        let widget = self.tree.get_mut(node).unwrap();
+
+        widget.widget_data_mut().compute_style();
+
+        if !widget.widget_data_mut().dirty_flag_clean(DirtyFlags::CONTENT_SIZE) {
+            let size = widget.compute_content_size(available_size);
+            widget.widget_data_mut().geometry.content_size = size
+        }
+
+        widget.widget_data_mut().compute_item_size();
+        widget.widget_data_mut().compute_position();
+    }
+
+
     pub fn render(&self, d: &mut RaylibDrawHandle<'_>) {
-        let root = self.tree.root();
-        root.value().render(d);
+        if let Some(idx) = self.tree.get_root_index() {
+            self.render_rec(idx, d)
+        }
+    }
+
+    pub fn render_rec(&self, mut node: Index, d: &mut RaylibDrawHandle<'_>) {
+        let widget = self.tree.get(node).unwrap();
+        widget.render(d)
     }
 }
 

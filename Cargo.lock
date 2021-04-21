@@ -42,12 +42,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "ego-tree"
-version = "0.6.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a68a4904193147e0a8dec3314640e6db742afd5f6e634f428a6af230d9b3591"
-
-[[package]]
 name = "fs_extra"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -78,10 +72,10 @@ name = "gui"
 version = "0.1.0"
 dependencies = [
  "bitflags",
- "ego-tree",
  "generational-arena",
  "raylib",
  "uuid",
+ "vec-tree",
 ]
 
 [[package]]
@@ -178,6 +172,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc5cf98d8186244414c848017f0e2676b3fcb46807f6668a97dfe67359a3c4b7"
 dependencies = [
  "getrandom",
+]
+
+[[package]]
+name = "vec-tree"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b13a87f8563cac3b8170c7a6b0b641fdd29199a128c63b7a389556fc84f1d5e6"
+dependencies = [
+ "generational-arena",
 ]
 
 [[package]]

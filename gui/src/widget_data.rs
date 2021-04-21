@@ -18,7 +18,7 @@ use std::mem::take;
 use crate::gui::{Gui, GuiData, RefGuiData};
 
 pub struct WidgetData {
-    pub gui_data: Option<RefGuiData>,
+    pub gui_data: RefGuiData,
     pub state: WidgetState,
     pub geometry: WidgetGeometry,
     pub model: WidgetModel,
@@ -65,19 +65,19 @@ impl WidgetData {
         self.state.dirty_flags |= flag;
     }
 
-    pub fn unset_dirty_flag(&mut self, flag: DirtyFlags) -> bool {
-        self.state.unset_dirty_flag(flag)
+    pub fn dirty_flag_clean(&mut self, flag: DirtyFlags) -> bool {
+        self.state.dirty_flag_clean(flag)
     }
 
-    fn compute_style(&mut self) {
-        if self.state.unset_dirty_flag(DirtyFlags::STYLE) {
+    pub fn compute_style(&mut self) {
+        if self.state.dirty_flag_clean(DirtyFlags::STYLE) {
             return;
         }
         self.set_dirty_flag(DirtyFlags::CONTENT_SIZE)
     }
 
-    fn compute_item_size(&mut self) {
-        if self.state.unset_dirty_flag(DirtyFlags::SIZE) {
+    pub fn compute_item_size(&mut self) {
+        if self.state.dirty_flag_clean(DirtyFlags::SIZE) {
             return;
         }
         let width;
@@ -99,8 +99,8 @@ impl WidgetData {
         self.set_dirty_flag(DirtyFlags::POSITION)
     }
 
-    fn compute_position(&mut self) {
-        if self.state.unset_dirty_flag(DirtyFlags::POSITION) {
+    pub fn compute_position(&mut self) {
+        if self.state.dirty_flag_clean(DirtyFlags::POSITION) {
             return;
         }
         self.geometry.copy_size_to_layout();
@@ -109,11 +109,11 @@ impl WidgetData {
     }
 }
 
-impl<N: WidgetDataProvider + SizeableWidget> LayoutableWidget for N {
-    fn layout(&mut self, available_size: &Size) {
-        {
-            self.widget_data().gui_data
-        }
+// impl<N: WidgetDataProvider + SizeableWidget> LayoutableWidget for N {
+//     fn layout(&mut self, available_size: &Size) {
+        // {
+        //     self.widget_data().gui_data
+        // }
 //         {
 // //            compute_tree_style(&self.myself());
 //         }
@@ -138,8 +138,8 @@ impl<N: WidgetDataProvider + SizeableWidget> LayoutableWidget for N {
 //
 //         self.widget_data_mut().compute_item_size();
 //         self.widget_data_mut().compute_position();
-    }
-}
+//     }
+// }
 
 // pub fn compute_tree_style(node: &RefNode<Widget>) {
 //     let mut bn = node.borrow_mut();
