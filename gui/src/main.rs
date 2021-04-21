@@ -6,8 +6,8 @@ use gui::gui::Gui;
 use gui::widget_operation::{WidgetOp, Size};
 
 use gui::alignment::Alignment;
-use gui::alignment::VAlignment::{Bottom, Top};
-use gui::alignment::HAlignment::{Left, Right};
+use gui::alignment::VAlignment::{Bottom, Top, Center};
+use gui::alignment::HAlignment::{Left, Right, Middle};
 
 use gui::widget_data::WidgetDataProvider;
 use gui::widget::Widget::Pane;
@@ -25,11 +25,12 @@ fn main() {
 
     let (mut gui,ri) = Gui::new(|d| {
         let mut par = PanePar::new(d);
-        par.set_fill_height(true)
+        par.set_requested_height(200.0)
             .set_requested_width(200.0)
-            .set_position(0.0,0.0)
-            .set_valignment(Top)
-            .set_halignment(Left);
+            .set_absolute_coordinate(false)
+            .set_position(50.0,50.0)
+            .set_valignment(Center)
+            .set_halignment(Middle);
         Pane(par)
     });
 
@@ -58,7 +59,7 @@ fn main() {
 
         gui.render(&mut d);
 
-        d.draw_line(0, 120, screen_size.width as i32, 120, Color::RED);
-        d.draw_line(120, 0, 120, screen_size.height as i32, Color::RED);
+        // d.draw_line(0, 120, screen_size.width as i32, 120, Color::RED);
+        // d.draw_line(120, 0, 120, screen_size.height as i32, Color::RED);
     }
 }

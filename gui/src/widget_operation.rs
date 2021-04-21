@@ -69,6 +69,8 @@ pub trait WidgetOp {
         self.set_halignment(halignment)
     }
 
+    fn set_absolute_coordinate(&mut self,absolute:bool) -> &mut dyn WidgetOp;
+
     fn set_position(&mut self, x: f32, y:f32) -> &mut dyn WidgetOp;
     fn set_valignment(&mut self, valignment: VAlignment) -> &mut dyn WidgetOp;
     fn set_halignment(&mut self, halignment: HAlignment) -> &mut dyn WidgetOp;

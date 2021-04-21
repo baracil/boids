@@ -90,7 +90,7 @@ impl Gui {
         }
 
         widget.widget_data_mut().compute_item_size();
-        widget.widget_data_mut().compute_position();
+        widget.widget_data_mut().compute_position(available_size);
     }
 
 

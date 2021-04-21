@@ -99,12 +99,12 @@ impl WidgetData {
         self.set_dirty_flag(DirtyFlags::POSITION)
     }
 
-    pub fn compute_position(&mut self) {
+    pub fn compute_position(&mut self, available_size:&Size) {
         if self.state.dirty_flag_clean(DirtyFlags::POSITION) {
             return;
         }
         self.geometry.copy_size_to_layout();
-        self.geometry.compute_item_position();
+        self.geometry.compute_item_position(available_size);
         self.geometry.compute_content_position();
     }
 }
@@ -178,6 +178,16 @@ impl WidgetOp for WidgetData {
 
     fn padding(&self) -> f32 {
         self.model.padding
+    }
+
+    fn set_absolute_coordinate(&mut self, absolute: bool) -> &mut dyn WidgetOp {
+        if self.geometry.absolute_coordinate == absolute {
+            return self
+        }
+
+        self.geometry.absolute_coordinate = absolute;
+        self.set_dirty_flag(DirtyFlags::POSITION);
+        self
     }
 
     fn set_position(&mut self, x: f32, y: f32) -> &mut dyn WidgetOp {
@@ -295,6 +305,10 @@ impl<M: WidgetDataProvider> WidgetOp for M {
         self.widget_data().padding()
     }
 
+    fn set_absolute_coordinate(&mut self, absolute: bool) -> &mut dyn WidgetOp {
+        self.widget_data_mut().set_absolute_coordinate(absolute)
+    }
+
     fn set_position(&mut self, x: f32, y: f32) -> &mut dyn WidgetOp {
         self.widget_data_mut().set_position(x,y)
     }
@@ -306,6 +320,8 @@ impl<M: WidgetDataProvider> WidgetOp for M {
     fn set_halignment(&mut self, halignment: HAlignment) -> &mut dyn WidgetOp {
         self.widget_data_mut().set_halignment(halignment)
     }
+
+
 
     fn set_padding(&mut self, padding: f32) -> &mut dyn WidgetOp {
         self.widget_data_mut().set_padding(padding)
