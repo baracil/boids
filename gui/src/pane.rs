@@ -4,7 +4,7 @@ use crate::widget::Widget;
 use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 use crate::widget_operation::{RenderableWidget, Size};
 use raylib::prelude::*;
-use crate::gui::{GuiData, RefGuiData};
+use crate::gui::{Gui, GuiData};
 
 pub struct PanePar {
     widget_data: WidgetData,
@@ -12,13 +12,13 @@ pub struct PanePar {
 }
 
 impl PanePar {
-    pub fn new(gui_data:RefGuiData) -> Self {
-        Self{widget_data:WidgetData::new(gui_data)}
+    pub fn new() -> Self {
+        Self{widget_data:WidgetData::new()}
     }
 }
 
 impl SizeableWidget for PanePar {
-    fn compute_content_size(&self, available_size: &Size) -> Size {
+    fn compute_content_size(&self, gui_data:&GuiData, available_size: &Size) -> Size {
         let mut width = self.widget_data.geometry.requested_size.width;
         let mut height = self.widget_data.geometry.requested_size.height;
 
@@ -35,7 +35,7 @@ impl SizeableWidget for PanePar {
 }
 
 impl RenderableWidget for PanePar {
-    fn render(&self, d: &mut RaylibDrawHandle<'_>) {
+    fn render(&self, gui_data:&GuiData, d: &mut RaylibDrawHandle<'_>) {
         d.draw_rectangle_rec(self.widget_data.geometry.item_layout,Color::SKYBLUE)
     }
 }

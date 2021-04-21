@@ -23,16 +23,18 @@ fn main() {
         .title("Hello, World")
         .build();
 
-    let (mut gui,ri) = Gui::new(|d| {
-        let mut par = PanePar::new(d);
+    let pane = {
+        let mut par= PanePar::new();
         par.set_requested_height(200.0)
             .set_requested_width(200.0)
             .set_absolute_coordinate(false)
-            .set_position(50.0,50.0)
+            .set_position(50.0, 50.0)
             .set_valignment(Center)
             .set_halignment(Middle);
         Pane(par)
-    });
+    };
+
+    let mut gui = Gui::new(pane);
 
     let font_id = gui.load_font(&mut rl, &thread,
             "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",

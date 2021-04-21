@@ -14,11 +14,9 @@ use raylib::prelude::Color;
 use raylib::drawing::RaylibDrawHandle;
 use crate::widget::Widget;
 use generational_arena::Index;
-use std::mem::take;
-use crate::gui::{Gui, GuiData, RefGuiData};
+use crate::gui::{Gui, GuiData};
 
 pub struct WidgetData {
-    pub gui_data: RefGuiData,
     pub state: WidgetState,
     pub geometry: WidgetGeometry,
     pub model: WidgetModel,
@@ -26,9 +24,8 @@ pub struct WidgetData {
 
 impl WidgetData {
 
-    pub fn new(gui_data:RefGuiData) -> Self {
+    pub fn new() -> Self {
         Self {
-            gui_data,
             state: WidgetState::new(),
             geometry: WidgetGeometry::new(),
             model: WidgetModel::new(),
@@ -164,7 +161,7 @@ pub trait WidgetDataProvider {
 }
 
 pub trait SizeableWidget {
-    fn compute_content_size(&self, available_size: &Size) -> Size;
+    fn compute_content_size(&self, gui_data:&GuiData, available_size: &Size) -> Size;
 }
 
 impl WidgetOp for WidgetData {

@@ -4,6 +4,7 @@ use raylib::prelude::*;
 
 use crate::alignment::{Alignment, VAlignment, HAlignment};
 use crate::mouse::MouseState;
+use crate::gui::{Gui, GuiData};
 
 bitflags! {
     pub struct DirtyFlags: u32 {
@@ -102,5 +103,5 @@ pub trait UpdatableWidget {
 
 pub trait RenderableWidget {
     /// draw the node
-    fn render(&self, d: &mut RaylibDrawHandle);
+    fn render(&self, gui_data:&GuiData, d: &mut RaylibDrawHandle);
 }

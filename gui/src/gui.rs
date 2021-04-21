@@ -18,24 +18,41 @@ use raylib::core::text::Font;
 use crate::widget_data::{WidgetData, WidgetDataProvider, SizeableWidget};
 use vec_tree::VecTree;
 
-pub type RefGuiData = Rc<RefCell<GuiData>>;
 
 pub struct Gui {
-    gui_data: RefGuiData,
+    data: GuiData,
     tree: VecTree<Widget>,
+}
+
+pub struct GuiData {
+    fonts: Arena<FontInfo>,
+}
+
+impl GuiData {
+    pub fn measure_text(&self, font_id: Index, text: &str, spacing: f32) -> Size {
+        if let Some(fi) = self.fonts.get(font_id) {
+            return fi.measure_text(text, spacing);
+        }
+        Size::empty()
+    }
+
+    pub fn draw_text(&self, d: &mut RaylibDrawHandle, font_id: Index, text: &str, position: &Vector2, spacing: f32, color: Color) {
+        if let Some(fi) = self.fonts.get(font_id) {
+            fi.draw_text(d, text, position, spacing, color);
+        }
+    }
+
 }
 
 
 impl Gui {
-    pub fn new(root_create: impl FnOnce(RefGuiData) -> Widget) -> (Gui, Index) {
-        let gui_data = Rc::new(RefCell::new(GuiData::new()));
+    pub fn new(root: Widget) -> Gui {
+        let mut fonts = Arena::new();
         let mut tree = VecTree::new();
-        let root = root_create(gui_data.clone());
-        let root_index = tree.insert_root(root);
-        return (Gui {
-            tree,
-            gui_data,
-        }, root_index);
+        tree.insert_root(root);
+        return Gui {
+            data:GuiData{fonts},
+            tree};
     }
 
     pub fn insert_root(&mut self, root: Widget) -> Index {
@@ -48,28 +65,14 @@ impl Gui {
 
 
         result.and_then(|font| {
-            let idx = self.gui_data.borrow_mut().fonts.insert_with(|idx| { FontInfo::new(font, size) });
+            let idx = self.data.fonts.insert_with(|idx| { FontInfo::new(font, size) });
             Ok(idx)
         })
     }
 
     ///
     pub fn get_font(&self, font_id: Index) -> Option<FontInfo> {
-        self.gui_data.borrow_mut().fonts.get(font_id).cloned()
-    }
-
-    ///
-    pub fn create_label(&mut self, f: impl FnOnce(&mut LabelPar)) -> Widget {
-        let mut par = LabelPar::new(self.gui_data.clone());
-        f(&mut par);
-        let node = Label(par);
-        node
-    }
-
-    pub fn create_pane(&mut self, f: impl FnOnce(&mut PanePar)) -> Widget {
-        let mut par = PanePar::new(self.gui_data.clone());
-        f(&mut par);
-        Pane(par)
+        self.data.fonts.get(font_id).cloned()
     }
 
 
@@ -85,7 +88,7 @@ impl Gui {
         widget.widget_data_mut().compute_style();
 
         if !widget.widget_data_mut().dirty_flag_clean(DirtyFlags::CONTENT_SIZE) {
-            let size = widget.compute_content_size(available_size);
+            let size = widget.compute_content_size(&self.data, available_size);
             widget.widget_data_mut().geometry.content_size = size
         }
 
@@ -102,32 +105,9 @@ impl Gui {
 
     pub fn render_rec(&self, mut node: Index, d: &mut RaylibDrawHandle<'_>) {
         let widget = self.tree.get(node).unwrap();
-        widget.render(d)
+        widget.render(&self.data, d)
     }
+
+
 }
 
-
-pub struct GuiData {
-    fonts: Arena<FontInfo>
-}
-
-impl GuiData {
-    pub fn new() -> Self {
-        Self {
-            fonts: Default::default()
-        }
-    }
-
-    pub fn measure_text(&self, font_id: Index, text: &str, spacing: f32) -> Size {
-        if let Some(fi) = self.fonts.get(font_id) {
-            return fi.measure_text(text, spacing);
-        }
-        Size::empty()
-    }
-
-    pub fn draw_text(&self, d: &mut RaylibDrawHandle, font_id: Index, text: &str, position: &Vector2, spacing: f32, color: Color) {
-        if let Some(fi) = self.fonts.get(font_id) {
-            fi.draw_text(d, text, position, spacing, color);
-        }
-    }
-}

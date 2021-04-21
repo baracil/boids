@@ -13,7 +13,7 @@ use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 
 
 use crate::widget_operation::{RenderableWidget, Size, DirtyFlags};
-use crate::gui::{GuiData, RefGuiData};
+use crate::gui::{Gui, GuiData};
 use uuid::Uuid;
 use generational_arena::Index;
 
@@ -37,9 +37,9 @@ impl WidgetDataProvider for LabelPar {
 }
 
 impl LabelPar {
-    pub fn new(gui_data:RefGuiData) -> Self {
+    pub fn new() -> Self {
         Self {
-            widget_data: WidgetData::new(gui_data),
+            widget_data: WidgetData::new(),
             text: None,
             font_id: None,
             spacing: 0.0,
@@ -75,7 +75,7 @@ impl LabelPar {
 
 
 impl SizeableWidget for LabelPar {
-    fn compute_content_size(&self, available_size:&Size) -> Size {
+    fn compute_content_size(&self, gui_data:&GuiData, available_size:&Size) -> Size {
         let text = match &self.text {
             None => "",
             Some(text) => text.as_str(),
@@ -83,13 +83,13 @@ impl SizeableWidget for LabelPar {
 
         match self.font_id {
             None => Size::empty(),
-            Some(f) => self.widget_data.gui_data.borrow().measure_text(f, text, self.spacing)
+            Some(f) => gui_data.measure_text(f, text, self.spacing)
         }
     }
 }
 
 impl RenderableWidget for LabelPar {
-    fn render(&self, d: &mut RaylibDrawHandle<'_>) {
+    fn render(&self, gui_data:&GuiData, d: &mut RaylibDrawHandle<'_>) {
         if let Some(background) = &self.widget_data.state.background {
             background.draw(d, &self.widget_data.geometry.item_layout)
         }
@@ -105,7 +105,7 @@ impl RenderableWidget for LabelPar {
                 y: self.widget_data.geometry.content_layout.y,
             };
             if let Some(font_id) = self.font_id {
-                self.widget_data.gui_data.borrow().draw_text(d,font_id,text.as_str(), &position, self.spacing, self.color)
+                gui_data.draw_text(d,font_id,text.as_str(), &position, self.spacing, self.color)
             }
         }
     }
