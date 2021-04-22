@@ -1,4 +1,4 @@
-use std::cell::RefCell;
+use std::cell::{RefCell, Cell, Ref};
 use std::rc::Rc;
 
 use raylib::color::Color;
@@ -6,24 +6,22 @@ use raylib::core::drawing::RaylibDrawHandle;
 use raylib::prelude::*;
 
 
-
-
 use crate::widget::Widget;
 use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 
 
-use crate::widget_operation::{RenderableWidget, Size, DirtyFlags};
+use crate::widget_operation::{RenderableWidget, DirtyFlags, WidgetOp};
 use crate::gui::{Gui, GuiData};
 use uuid::Uuid;
 use generational_arena::Index;
+use vec_tree::VecTree;
+use crate::size::{Size, CachedSize};
+use crate::text_style::TextStyle;
+use crate::fill::Fill::Enabled;
 
 pub struct LabelPar {
     widget_data: WidgetData,
-    text: Option<String>,
-    font_id: Option<Index>,
-    spacing: f32,
-    //todo use style to define this value
-    color: Color, //todo use style to define this value
+    text: RefCell<Option<String>>,
 }
 
 
@@ -40,72 +38,110 @@ impl LabelPar {
     pub fn new() -> Self {
         Self {
             widget_data: WidgetData::new(),
-            text: None,
-            font_id: None,
-            spacing: 0.0,
-            color: Color::BLACK,
+            text: RefCell::new(None),
         }
     }
 
-    pub fn set_font_id(&mut self, font_id:Index) -> &mut LabelPar {
-        self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
-        self.font_id = Some(font_id);
-        self
-    }
-
-    pub fn clear_text(&mut self) -> &mut LabelPar {
-        if let Some(_) = self.text {
+    pub fn clear_text(&self) -> &LabelPar {
+        let has_no_text = RefCell::borrow(&self.text).as_ref().is_none();
+        if !has_no_text {
+            self.text.replace(None);
+            //todo dirty
             self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
-            self.text = None;
         }
         self
     }
 
-    pub fn set_text(&mut self, text: String) -> &mut LabelPar {
-        if let Some(txt) = &self.text {
+    pub fn set_text(&self, text: String) -> &LabelPar {
+        let borrowed_text = self.text.borrow();
+        let current_text = borrowed_text.as_ref();
+        if let Some(txt) = current_text {
             if text.eq(txt) {
                 return self;
             }
         }
         self.widget_data.set_dirty_flag(DirtyFlags::SIZE);
-        self.text = Some(text);
+        self.text.replace(Some(text));
         self
     }
 }
 
 
 impl SizeableWidget for LabelPar {
-    fn compute_content_size(&self, gui_data:&GuiData, available_size:&Size) -> Size {
-        let text = match &self.text {
-            None => "",
-            Some(text) => text.as_str(),
-        };
-
-        match self.font_id {
-            None => Size::empty(),
-            Some(f) => gui_data.measure_text(f, text, self.spacing)
+    fn update_preferred_size(&self, gui: &Gui) {
+        if self.widget_data().dirty_flag_clean(DirtyFlags::PREFERRED_SIZE) {
+            return
         }
+
+        let padding = self.widget_data.padding();
+
+        let text_size = match self.text.borrow().as_ref() {
+            None => Size::empty(),
+            Some(text) => {
+                let borrowed_text_style = self.widget_data.state.text_style.borrow();
+                let text_style = borrowed_text_style.as_ref();
+                match text_style {
+                    None => Size::empty(),
+                    Some(t) => {
+                        gui.measure_text(text, t)
+                    }
+                }
+            }
+        }.with_padding(&padding);
+
+        let mut requested = self.widget_data.geometry.requested_size.get();
+        requested.replace_empty_dimensions(&text_size).min_mut(&text_size);
+
+        self.widget_data.geometry.preferred_size.replace(requested);
+        self.widget_data.invalidate_content_size(gui)
+    }
+
+    fn update_content_size(&self, gui: &Gui, available_space: &Size) {
+        let mut content_cache = self.widget_data.geometry.content_size.borrow_mut();
+        let clean_flag =  self.widget_data().dirty_flag_clean(DirtyFlags::PREFERRED_SIZE);
+        let cache_valid = available_space.eq(content_cache.reference());
+        if clean_flag && cache_valid {
+            return
+        }
+
+        content_cache.set_reference(available_space.to_owned());
+
+        let mut content_size = self.widget_data.geometry.preferred_size.clone().into_inner();
+
+        if let Enabled(_) = self.widget_data.geometry.fill_width.get() {
+            content_size.set_width(available_space.width())
+        }
+        if let Enabled(_) = self.widget_data.geometry.fill_height.get() {
+            content_size.set_height(available_space.height())
+        }
+
+        content_cache.set_size(content_size);
+        self.widget_data.invalidate_size(gui);
     }
 }
 
 impl RenderableWidget for LabelPar {
-    fn render(&self, gui_data:&GuiData, d: &mut RaylibDrawHandle<'_>) {
-        if let Some(background) = &self.widget_data.state.background {
-            background.draw(d, &self.widget_data.geometry.item_layout)
-        }
-        if let Some(border) = &self.widget_data.state.border {
-            border.draw(d, &self.widget_data.geometry.item_layout)
+    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, position:Vector2) {
+        {
+            let widget_layout = self.widget_data.geometry.widget_layout.clone().into_inner();
+            if let Some(background) = &self.widget_data.state.background {
+                background.draw(d, &widget_layout)
+            }
+            if let Some(border) = &self.widget_data.state.border {
+                border.draw(d, &widget_layout)
+            }
+            self.widget_data.geometry.widget_layout.replace(widget_layout);
         }
 
-        d.draw_rectangle_rec(self.widget_data.geometry.item_layout, Color::GREEN);
 
-        if let Some(text) = &self.text {
+        if let Some(text) = self.text.borrow().as_ref() {
+            let content_layout = self.widget_data.geometry.content_layout.borrow();
             let position = Vector2 {
-                x: self.widget_data.geometry.content_layout.x,
-                y: self.widget_data.geometry.content_layout.y,
+                x: content_layout.x,
+                y: content_layout.y,
             };
-            if let Some(font_id) = self.font_id {
-                gui_data.draw_text(d,font_id,text.as_str(), &position, self.spacing, self.color)
+            if let Some(text_style) = self.widget_data.state.text_style.borrow().as_ref() {
+                gui.draw_text(d, text.as_str(), text_style, &position)
             }
         }
     }

@@ -15,6 +15,13 @@ pub mod widget_data;
 pub mod widget;
 pub mod label;
 pub mod pane;
+pub mod hbox;
+pub mod size;
+pub mod padding;
+pub mod border;
+pub mod text_style;
+pub mod fill;
+pub mod background;
 
 #[cfg(test)]
 mod tests {

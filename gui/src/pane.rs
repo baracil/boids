@@ -1,10 +1,15 @@
+use std::cell::{RefCell, Cell};
 use std::rc::Rc;
-use std::cell::RefCell;
-use crate::widget::Widget;
-use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
-use crate::widget_operation::{RenderableWidget, Size};
+
 use raylib::prelude::*;
+use vec_tree::{VecTree, Index};
+
 use crate::gui::{Gui, GuiData};
+use crate::widget::Widget;
+use crate::widget_data::{SizeableWidget, WidgetData, WidgetDataProvider};
+use crate::widget_operation::{RenderableWidget, WidgetOp};
+use crate::size::{Size, CachedSize};
+use crate::fill::Fill;
 
 pub struct PanePar {
     widget_data: WidgetData,
@@ -18,25 +23,20 @@ impl PanePar {
 }
 
 impl SizeableWidget for PanePar {
-    fn compute_content_size(&self, gui_data:&GuiData, available_size: &Size) -> Size {
-        let mut width = self.widget_data.geometry.requested_size.width;
-        let mut height = self.widget_data.geometry.requested_size.height;
 
-        if self.widget_data.geometry.fill_width {
-            width = available_size.width;
-        }
+    fn update_preferred_size(&self, gui: &Gui) {
+        todo!()
+    }
 
-        if self.widget_data.geometry.fill_height {
-            height = available_size.height;
-        }
-
-        return Size{width,height}
+    fn update_content_size(&self, gui: &Gui, available_space: &Size) {
+        todo!()
     }
 }
 
 impl RenderableWidget for PanePar {
-    fn render(&self, gui_data:&GuiData, d: &mut RaylibDrawHandle<'_>) {
-        d.draw_rectangle_rec(self.widget_data.geometry.item_layout,Color::SKYBLUE)
+    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle<'_>, position:Vector2) {
+        let layout = self.widget_data.geometry.widget_layout.to_owned().into_inner();
+        d.draw_rectangle_rec(layout, Color::SKYBLUE)
     }
 }
 

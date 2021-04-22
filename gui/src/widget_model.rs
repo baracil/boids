@@ -1,3 +1,6 @@
+use crate::padding::Padding;
+use std::cell::Cell;
+
 pub struct WidgetModel {
     pub text_style_name: String,
     pub back_style_name: String,
@@ -10,7 +13,7 @@ pub struct WidgetModel {
     pub hoovered: bool,
     pub disable: bool,
 
-    pub padding: f32,
+    pub padding: Cell<Padding>,
 
     pub action_id: Option<String>,
 }
@@ -26,7 +29,7 @@ impl WidgetModel {
             armed: false,
             hoovered: false,
             disable: false,
-            padding: 0.0,
+            padding: Cell::new(Padding::none()),
             action_id: None,
         }
     }

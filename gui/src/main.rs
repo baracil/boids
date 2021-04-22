@@ -3,7 +3,7 @@ use raylib::prelude::*;
 use gui::gui::Gui;
 
 
-use gui::widget_operation::{WidgetOp, Size};
+use gui::widget_operation::{WidgetOp};
 
 use gui::alignment::Alignment;
 use gui::alignment::VAlignment::{Bottom, Top, Center};
@@ -12,6 +12,7 @@ use gui::alignment::HAlignment::{Left, Right, Middle};
 use gui::widget_data::WidgetDataProvider;
 use gui::widget::Widget::Pane;
 use gui::pane::PanePar;
+use gui::size::Size;
 
 
 fn main() {
@@ -23,43 +24,43 @@ fn main() {
         .title("Hello, World")
         .build();
 
+    let mut gui = Gui::new();
+
     let pane = {
-        let mut par= PanePar::new();
-        par.set_requested_height(200.0)
-            .set_requested_width(200.0)
-            .set_absolute_coordinate(false)
-            .set_position(50.0, 50.0)
-            .set_valignment(Center)
-            .set_halignment(Middle);
+        let par = PanePar::new();
+        par.set_requested_height(&gui, 200.0)
+            .set_requested_width(&gui, 200.0)
+            .set_absolute_coordinate_x(&gui, false)
+            .set_absolute_coordinate_y(&gui, false)
+            .set_position(&gui, 50.0, 50.0)
+            .set_valignment(&gui, Center)
+            .set_halignment(&gui, Middle);
         Pane(par)
     };
 
-    let mut gui = Gui::new(pane);
+    gui.insert_root(pane);
 
-    let font_id = gui.load_font(&mut rl, &thread,
-            "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",
-            48,
-            200,
-        ).unwrap();
+    gui.load_font(&mut rl, &thread,
+                                "default",
+                                "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",
+                                48,
+                                200,
+    ).expect("Could not load the font");
 
 
-
-    let mut screen_size:Size = Size{width:rl.get_screen_width() as f32, height:rl.get_screen_height() as f32};
+    let mut screen_size: Size = Size::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32);
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
 
         if d.is_window_resized() {
-            screen_size = Size{width:d.get_screen_width() as f32, height:d.get_screen_height() as f32};
+            screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32 );
         }
 
         gui.layout(&screen_size);
-
-
-
         d.clear_background(Color::WHITE);
 
-        gui.render(&mut d);
+        gui.render(&mut d, Vector2{x:0.0,y:0.0});
 
         // d.draw_line(0, 120, screen_size.width as i32, 120, Color::RED);
         // d.draw_line(120, 0, 120, screen_size.height as i32, Color::RED);

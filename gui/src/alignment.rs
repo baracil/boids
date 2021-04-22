@@ -49,3 +49,9 @@ impl HAlignment {
         }
     }
 }
+
+impl Default for Alignment {
+    fn default() -> Self {
+        Alignment{vertical:Center,horizontal:Middle}
+    }
+}

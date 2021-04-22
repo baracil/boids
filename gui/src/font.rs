@@ -2,8 +2,8 @@ use std::rc::Rc;
 
 use raylib::prelude::*;
 
-use crate::widget_operation::Size;
 use generational_arena::Index;
+use crate::size::Size;
 
 
 #[derive(Clone)]
@@ -26,10 +26,7 @@ impl FontInfo {
     ///
     pub fn measure_text(&self, text: &str, spacing: f32) -> Size {
         let size = measure_text_ex(&self.font.as_ref(), text, self.size as f32, spacing);
-        Size {
-            width: size.x,
-            height: size.y,
-        }
+        Size::from_vector2(&size)
     }
 
     /// Draw the provided text with this font information
