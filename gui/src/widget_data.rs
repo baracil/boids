@@ -1,26 +1,22 @@
-use raylib::math::Vector2;
+use std::cell::{Cell};
+use std::ops::BitAnd;
 
-use crate::alignment::{Alignment, HAlignment, VAlignment};
+use generational_arena::Index;
+use raylib::prelude::*;
+use vec_tree::VecTree;
+
+use crate::alignment::{HAlignment, VAlignment};
+use crate::fill::Fill;
+use crate::fill::Fill::Disabled;
+use crate::gui::{Gui};
 use crate::mouse::MouseState;
+use crate::padding::Padding;
+use crate::size::Size;
+use crate::widget::Widget;
 use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
 use crate::widget_operation::{DirtyFlags, UpdatableWidget, WidgetOp};
 use crate::widget_state::WidgetState;
-use std::rc::{Rc, Weak};
-use std::cell::{RefCell, Cell};
-use std::ops::BitAnd;
-use uuid::Uuid;
-use raylib::prelude::Color;
-use raylib::drawing::RaylibDrawHandle;
-use crate::widget::Widget;
-use generational_arena::Index;
-use crate::gui::{Gui, GuiData};
-use vec_tree::VecTree;
-use crate::size::Size;
-use crate::padding::Padding;
-use crate::fill::Fill;
-use crate::fill::Fill::Disabled;
-use std::panic::panic_any;
 
 pub struct WidgetData {
     pub tree_index: Option<Index>,
@@ -260,13 +256,13 @@ impl WidgetOp for WidgetData {
     }
 
     fn set_valignment(&self, gui: &Gui, valignment: VAlignment) -> &dyn WidgetOp {
-        let mut current_alignment = self.geometry.alignment.get();
+        let current_alignment = self.geometry.alignment.get();
         self.set_alignment(gui, valignment, current_alignment.horizontal);
         self
     }
 
     fn set_halignment(&self, gui: &Gui, halignment: HAlignment) -> &dyn WidgetOp {
-        let mut current_alignment = self.geometry.alignment.get();
+        let current_alignment = self.geometry.alignment.get();
         self.set_alignment(gui, current_alignment.vertical, halignment);
         self
     }

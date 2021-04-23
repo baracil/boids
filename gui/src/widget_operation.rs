@@ -1,13 +1,11 @@
-
-use raylib::math::{Rectangle, Vector2};
 use raylib::prelude::*;
 
-use crate::alignment::{Alignment, VAlignment, HAlignment};
+use crate::alignment::{HAlignment, VAlignment};
+use crate::fill::Fill;
+use crate::gui::{Gui};
 use crate::mouse::MouseState;
-use crate::gui::{Gui, GuiData};
 use crate::padding::Padding;
 use crate::size::Size;
-use crate::fill::Fill;
 
 bitflags! {
     pub struct DirtyFlags: u32 {

@@ -1,23 +1,17 @@
-use std::cell::{RefCell, Cell, Ref};
-use std::rc::Rc;
+use std::cell::{RefCell};
 
-use raylib::color::Color;
-use raylib::core::drawing::RaylibDrawHandle;
 use raylib::prelude::*;
+use std::ops::Deref;
 
-
-use crate::widget::Widget;
 use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
 
 
 use crate::widget_operation::{RenderableWidget, DirtyFlags, WidgetOp};
-use crate::gui::{Gui, GuiData};
-use uuid::Uuid;
-use generational_arena::Index;
-use vec_tree::VecTree;
-use crate::size::{Size, CachedSize};
-use crate::text_style::TextStyle;
+use crate::gui::{Gui};
+use crate::size::{Size};
 use crate::fill::Fill::Enabled;
+use crate::background::BackgroundRenderer;
+use crate::border::BorderRenderer;
 
 pub struct LabelPar {
     widget_data: WidgetData,
@@ -70,7 +64,7 @@ impl LabelPar {
 impl SizeableWidget for LabelPar {
     fn update_preferred_size(&self, gui: &Gui) {
         if self.widget_data().dirty_flag_clean(DirtyFlags::PREFERRED_SIZE) {
-            return
+            return;
         }
 
         let padding = self.widget_data.padding();
@@ -79,11 +73,10 @@ impl SizeableWidget for LabelPar {
             None => Size::empty(),
             Some(text) => {
                 let borrowed_text_style = self.widget_data.state.text_style.borrow();
-                let text_style = borrowed_text_style.as_ref();
-                match text_style {
+                match borrowed_text_style.deref() {
                     None => Size::empty(),
-                    Some(t) => {
-                        gui.measure_text(text, t)
+                    Some(text_style) => {
+                        text_style.measure_text(text)
                     }
                 }
             }
@@ -98,10 +91,10 @@ impl SizeableWidget for LabelPar {
 
     fn update_content_size(&self, gui: &Gui, available_space: &Size) {
         let mut content_cache = self.widget_data.geometry.content_size.borrow_mut();
-        let clean_flag =  self.widget_data().dirty_flag_clean(DirtyFlags::PREFERRED_SIZE);
+        let clean_flag = self.widget_data().dirty_flag_clean(DirtyFlags::PREFERRED_SIZE);
         let cache_valid = available_space.eq(content_cache.reference());
         if clean_flag && cache_valid {
-            return
+            return;
         }
 
         content_cache.set_reference(available_space.to_owned());
@@ -121,16 +114,21 @@ impl SizeableWidget for LabelPar {
 }
 
 impl RenderableWidget for LabelPar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, position:Vector2) {
+    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, position: Vector2) {
         {
-            let widget_layout = self.widget_data.geometry.widget_layout.clone().into_inner();
-            if let Some(background) = &self.widget_data.state.background {
-                background.draw(d, &widget_layout)
+            let widget_layout = self.widget_data.geometry.widget_layout.to_owned().into_inner();
+            {
+                let borrowed_background = &self.widget_data.state.background.borrow();
+                if let Some(background) = borrowed_background.as_deref() {
+                    background.draw(d, &widget_layout)
+                }
             }
-            if let Some(border) = &self.widget_data.state.border {
-                border.draw(d, &widget_layout)
+            {
+                let borrowed_border = &self.widget_data.state.border.borrow();
+                if let Some(border) = borrowed_border.as_deref() {
+                    border.draw(d, &widget_layout)
+                }
             }
-            self.widget_data.geometry.widget_layout.replace(widget_layout);
         }
 
 
@@ -140,8 +138,10 @@ impl RenderableWidget for LabelPar {
                 x: content_layout.x,
                 y: content_layout.y,
             };
-            if let Some(text_style) = self.widget_data.state.text_style.borrow().as_ref() {
-                gui.draw_text(d, text.as_str(), text_style, &position)
+            let borrowed_text_style = self.widget_data.state.text_style.borrow();
+            let text_style = borrowed_text_style.as_deref();
+            if let Some(text_style) = text_style {
+                text_style.draw_text(d,text,&position)
             }
         }
     }

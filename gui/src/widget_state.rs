@@ -1,25 +1,25 @@
 use std::rc::Rc;
 
 use std::cell::{Cell, RefCell};
-use crate::border::Border;
+use crate::border::{Border};
 use crate::widget_operation::DirtyFlags;
-use crate::background::Background;
+use crate::background::{Background};
 use crate::text_style::TextStyle;
 
 pub struct WidgetState {
     pub dirty_flags: Cell<DirtyFlags>,
-    pub text_style: RefCell<Option<TextStyle>>,
-    pub background: Option<Rc<dyn Background>>,
-    pub border: Option<Rc<dyn Border>>,
+    pub text_style: RefCell<Option<Rc<TextStyle>>>,
+    pub background: RefCell<Option<Rc<Background>>>,
+    pub border: RefCell<Option<Rc<Border>>>,
 }
 
 impl WidgetState {
     pub fn new() -> Self {
         Self {
             dirty_flags: Cell::new(DirtyFlags::ALL),
-            text_style: RefCell::new(Some(TextStyle::new("default".to_owned()))),
-            background: None,
-            border: None,
+            text_style: RefCell::new(None),
+            background: RefCell::new(None),
+            border: RefCell::new(None),
         }
     }
 

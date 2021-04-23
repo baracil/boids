@@ -1,15 +1,10 @@
-use std::cell::{RefCell, Cell};
-use std::rc::Rc;
 
 use raylib::prelude::*;
-use vec_tree::{VecTree, Index};
 
-use crate::gui::{Gui, GuiData};
-use crate::widget::Widget;
+use crate::gui::{Gui};
 use crate::widget_data::{SizeableWidget, WidgetData, WidgetDataProvider};
-use crate::widget_operation::{RenderableWidget, WidgetOp};
-use crate::size::{Size, CachedSize};
-use crate::fill::Fill;
+use crate::widget_operation::{RenderableWidget};
+use crate::size::{Size};
 
 pub struct PanePar {
     widget_data: WidgetData,

@@ -5,11 +5,9 @@ use gui::gui::Gui;
 
 use gui::widget_operation::{WidgetOp};
 
-use gui::alignment::Alignment;
 use gui::alignment::VAlignment::{Bottom, Top, Center};
 use gui::alignment::HAlignment::{Left, Right, Middle};
 
-use gui::widget_data::WidgetDataProvider;
 use gui::widget::Widget::Pane;
 use gui::pane::PanePar;
 use gui::size::Size;

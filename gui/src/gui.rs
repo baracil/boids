@@ -1,27 +1,18 @@
 use std::collections::HashMap;
-use std::rc::{Rc, Weak};
+use std::rc::Rc;
 
-use raylib::{RaylibHandle, RaylibThread};
-use uuid::Uuid;
+use generational_arena::{Index};
+use raylib::prelude::*;
+use vec_tree::{ChildrenIter, VecTree};
 
+use crate::background::{Background};
+use crate::border::{Border};
 use crate::font::FontInfo;
-use crate::widget::Widget;
-use raylib::prelude::{FontLoadEx, Color, Vector2};
-use raylib::drawing::RaylibDrawHandle;
-use std::cell::{RefCell, Cell};
-use crate::widget_operation::{RenderableWidget, DirtyFlags};
-use crate::label::LabelPar;
-use crate::widget::Widget::{Label, Pane};
-use crate::pane::PanePar;
-use generational_arena::{Arena, Index};
-use raylib::core::text::Font;
-use crate::widget_data::{WidgetData, WidgetDataProvider, SizeableWidget};
-use vec_tree::{VecTree, ChildrenIter};
-use crate::border::Border;
 use crate::size::Size;
 use crate::text_style::TextStyle;
-use crate::background::Background;
-
+use crate::widget::Widget;
+use crate::widget_data::{SizeableWidget, WidgetDataProvider};
+use crate::widget_operation::{RenderableWidget};
 
 pub struct Gui {
     data: GuiData,
@@ -31,47 +22,28 @@ pub struct Gui {
 
 pub struct GuiData {
     fonts: HashMap<String,FontInfo>,
-    background: HashMap<String,Box<dyn Background>>,
-    border: HashMap<String,Box<dyn Border>>,
+    text_styles: HashMap<String,TextStyle>,
+    background: HashMap<String,Background>,
+    border: HashMap<String,Border>,
 }
 
 impl GuiData {
-
-    pub fn measure_text(&self, text: &str, text_style:&TextStyle) -> Size {
-        if let Some(fi) = self.fonts.get(text_style.font_name()) {
-            return fi.measure_text(text, text_style.spacing());
-        }
-        Size::empty()
-    }
-
-    pub fn draw_text(&self, d: &mut RaylibDrawHandle, text: &str, text_style:&TextStyle, position: &Vector2) {
-        if let Some(fi) = self.fonts.get(text_style.font_name()) {
-            fi.draw_text(d, text, position, text_style.spacing(), text_style.color().to_owned());
-        }
-    }
 
 }
 
 
 impl Gui {
     pub fn new() -> Gui {
-        let mut tree = VecTree::new();
+        let tree = VecTree::new();
         return Gui {
             data: GuiData {
                 fonts:HashMap::new(),
+                text_styles:HashMap::new(),
                 background:HashMap::new(),
                 border:HashMap::new()
             },
             tree,
         };
-    }
-
-    pub fn measure_text(&self, text: &str, text_style:&TextStyle) -> Size {
-        self.data.measure_text(text,text_style)
-    }
-
-    pub fn draw_text(&self, d: &mut RaylibDrawHandle, text: &str, text_style:&TextStyle, position: &Vector2) {
-        self.data.draw_text(d,text, text_style,position);
     }
 
     pub fn get_parent(&self, node_id:Index) -> Option<Index> {

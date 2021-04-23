@@ -1,10 +1,8 @@
 use crate::widget_data::{WidgetData, SizeableWidget, WidgetDataProvider};
-use crate::widget_operation::{DirtyFlags, RenderableWidget, WidgetOp};
-use crate::gui::{GuiData, Gui};
+use crate::widget_operation::{RenderableWidget};
+use crate::gui::{Gui};
 use raylib::core::drawing::RaylibDrawHandle;
-use vec_tree::{VecTree, Index};
-use crate::widget::Widget;
-use crate::size::{Size, CachedSize};
+use crate::size::{Size};
 use raylib::math::Vector2;
 use std::cell::Cell;
 

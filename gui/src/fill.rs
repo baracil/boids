@@ -1,4 +1,3 @@
-use crate::padding::Padding;
 use crate::fill::Fill::Disabled;
 
 #[derive(Copy, Clone, Eq, PartialEq)]

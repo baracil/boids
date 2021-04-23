@@ -2,7 +2,6 @@ use std::rc::Rc;
 
 use raylib::prelude::*;
 
-use generational_arena::Index;
 use crate::size::Size;
 
 
