@@ -5,13 +5,13 @@ use crate::data::steering::Steering;
 use crate::data::vector::Vector;
 
 const CONSTRAINT_STRENGTH: f32 = 0.1;
-const DEAD_ANGLE: f32 = 0.0; // in degree
-const SAFE_SPACE_RATIO: f32 = 1.0;
+const DEAD_ANGLE: f32 = 20.0; // in degree
+const SAFE_SPACE_RATIO: f32 = 0.8;
 const DEFAULT_VISIBILITY_FACTOR: f32 = 3.0;
 
-const DEFAULT_SEPARATION_FACTOR: f32 = 2.0;
+const DEFAULT_SEPARATION_FACTOR: f32 = 6.0;
 const DEFAULT_COHESION_FACTOR: f32 = 4.0;
-const DEFAULT_ALIGNMENT_FACTOR: f32 = 30.;
+const DEFAULT_ALIGNMENT_FACTOR: f32 = 10.;
 
 const RANDOM_FACTOR: f32 = 0.0;
 const DEFAULT_BIRD_SIZE: f32 = 0.2;
@@ -90,8 +90,10 @@ impl World {
         let mut steering = Steering::new();
         let mut rng = rand::thread_rng();
 
-        for (i, boid) in self.current.iter().enumerate() {
-            let has_neighbours = self.compute_steering(*boid, i, &mut steering);
+        let nb_birds = self.current.len();
+        for i in 0..nb_birds {
+            let boid = &self.current[i];
+            let has_neighbours = self.compute_steering(*boid, &mut steering);
             let mut target: &mut Boid = &mut self.next[i];
             target.position = boid.position;
             target.velocity = boid.velocity;
@@ -133,7 +135,6 @@ impl World {
     fn compute_steering(
         &self,
         reference: Boid,
-        reference_idx: usize,
         steering: &mut Steering,
     ) -> bool {
         let mut buffer = Vector { x: 0., y: 0. };
@@ -141,10 +142,7 @@ impl World {
 
         let mut nb_visible = 0;
         let mut nb_in_safe_space = 0;
-        for (j, boid) in self.current.iter().enumerate() {
-            if j == reference_idx {
-                continue;
-            }
+        for boid in self.current.iter() {
             let visibility = self.compute_separation(reference, *boid, &mut buffer);
             if (visibility & IN_SAFE_SPACE) != 0 {
                 nb_in_safe_space += 1;
@@ -156,6 +154,13 @@ impl World {
                 steering.cohesion.add(&boid.position);
             }
         }
+        //remove myself
+        nb_visible -= 1;
+        nb_in_safe_space -= 1;
+        steering.alignment.subtract(&reference.velocity);
+        steering.cohesion.subtract(&reference.position);
+
+
         if nb_visible > 0 {
             steering.alignment.scale(1. / (nb_visible as f32));
             steering.cohesion.scale(1. / (nb_visible as f32));

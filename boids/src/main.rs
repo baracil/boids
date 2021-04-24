@@ -8,7 +8,7 @@ use crate::gui_form::GuiElement::Button;
 mod data;
 mod gui_form;
 
-const DEFAULT_NB_BIRDS: usize = 3000;
+const DEFAULT_NB_BIRDS: usize = 2000;
 const DEFAULT_WORLD_SIZE: f32 = 10.;
 
 pub struct ScreenSize {
