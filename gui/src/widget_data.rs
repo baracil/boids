@@ -82,11 +82,11 @@ impl WidgetData {
     }
 
     pub fn is_relative_coordinate_y(&self)->bool {
-        !self.geometry.absolute_coordinate_y.get()
+        !self.model.absolute_coordinate_y.get()
     }
 
     pub fn is_relative_coordinate_x(&self)->bool {
-        !self.geometry.absolute_coordinate_x.get()
+        !self.model.absolute_coordinate_x.get()
     }
 
 
@@ -164,10 +164,10 @@ impl WidgetData {
     }
 
     pub fn is_fill_height_or_relative_y(&self) -> bool {
-        self.model.fill_height.get().is_enabled() || !self.geometry.absolute_coordinate_y.get()
+        self.model.fill_height.get().is_enabled() || !self.model.absolute_coordinate_y.get()
     }
     pub fn is_fill_width_or_relative_x(&self) -> bool {
-        self.model.fill_width.get().is_enabled() || !self.geometry.absolute_coordinate_x.get()
+        self.model.fill_width.get().is_enabled() || !self.model.absolute_coordinate_x.get()
     }
 }
 
@@ -270,8 +270,8 @@ impl WidgetData {
         let position = self.model.position.get();
         let mut offset = self.compute_alignment_offset();
 
-        offset.x += WidgetData::compute_target(position.x,self.geometry.absolute_coordinate_x.get(), available_size.width());
-        offset.y += WidgetData::compute_target(position.y,self.geometry.absolute_coordinate_y.get(), available_size.height());
+        offset.x += WidgetData::compute_target(position.x,self.model.absolute_coordinate_x.get(), available_size.width());
+        offset.y += WidgetData::compute_target(position.y,self.model.absolute_coordinate_y.get(), available_size.height());
 
         self.set_widget_target(&offset);
     }
@@ -379,12 +379,12 @@ impl WidgetOp for WidgetData {
 
 
     fn set_absolute_coordinate_y(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
-        self.set_absolute(gui, &self.geometry.absolute_coordinate_y, absolute);
+        self.set_absolute(gui, &self.model.absolute_coordinate_y, absolute);
         self
     }
 
     fn set_absolute_coordinate_x(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
-        self.set_absolute(gui, &self.geometry.absolute_coordinate_x, absolute);
+        self.set_absolute(gui, &self.model.absolute_coordinate_x, absolute);
         self
     }
 

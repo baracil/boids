@@ -12,6 +12,8 @@ pub struct WidgetModel {
     pub fill_width: Cell<Fill>,
 
     pub position: Cell<Vector2>,
+    pub absolute_coordinate_y: Cell<bool>,
+    pub absolute_coordinate_x: Cell<bool>,
 
     pub text_style_name: RefCell<String>,
     pub back_style_name: RefCell<String>,
@@ -36,6 +38,8 @@ impl WidgetModel {
     pub(crate) fn new() -> Self {
         Self {
             position:Cell::new(Default::default()),
+            absolute_coordinate_y: Cell::new(true),
+            absolute_coordinate_x: Cell::new(true),
             fill_height: Cell::new(Disabled),
             fill_width: Cell::new(Disabled),
             user_preferred_size: Cell::new(Default::default()),

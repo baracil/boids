@@ -70,9 +70,6 @@ fn main() {
 
     let offset = Vector2{x:0.0, y:0.0};
 
-    let widget = gui.get_widget(root_pane).unwrap();
-
-
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
 
@@ -84,8 +81,6 @@ fn main() {
         d.clear_background(Color::WHITE);
 
         gui.render(&mut d, &offset, &screen_size);
-
-        let l = d.get_time() as f32;
 
     }
 }

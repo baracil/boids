@@ -22,17 +22,12 @@ pub struct WidgetGeometry {
 
     /// the requested position where the node should be drawn
     pub target2: Cell<Vector2>,
-    //todo move into model
-    pub absolute_coordinate_y: Cell<bool>,
-    pub absolute_coordinate_x: Cell<bool>,
 }
 
 impl WidgetGeometry {
     pub(crate) fn new() -> Self {
         Self {
             target2: Cell::new(Default::default()),
-            absolute_coordinate_y: Cell::new(true),
-            absolute_coordinate_x: Cell::new(true),
             content_layout: RefCell::new(Default::default()),
             widget_size: RefCell::new(Default::default()),
             widget_layout: RefCell::new(Default::default()),
