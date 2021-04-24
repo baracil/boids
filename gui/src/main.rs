@@ -8,12 +8,18 @@ use gui::widget_operation::{WidgetOp};
 use gui::alignment::VAlignment::{Bottom, Top, Center};
 use gui::alignment::HAlignment::{Left, Right, Middle};
 
-use gui::widget::Widget::Pane;
+use gui::widget::Widget::{Pane, VBox, Label};
 use gui::pane::PanePar;
 use gui::size::Size;
 use gui::background::Background::Solid;
 use gui::border::Border::Line;
-use gui::position::Coordinate::Relative;
+use gui::position::Coordinate::{Relative, Absolute};
+use gui::vbox::VBoxPar;
+use gui::label::LabelPar;
+use std::panic::panic_any;
+use gui::padding::Padding;
+use gui::fill::Fill::Enabled;
+use std::f32::consts::PI;
 
 
 fn main() {
@@ -43,6 +49,7 @@ fn main() {
         let par = PanePar::new();
         par.set_preferred_height(&gui, 200.0)
             .set_preferred_width(&gui, 400.0)
+            .set_padding(&gui,Padding::same(10.0))
             .set_position(&gui, &Relative(50.0),&Relative(50.0))
             .set_valignment(&gui, Center)
             .set_halignment(&gui, Middle);
@@ -50,15 +57,39 @@ fn main() {
     };
 
 
-    let _child_pane = {
-        let par = PanePar::new();
-        par.set_preferred_height(&gui, 20.0)
-            .set_preferred_width(&gui, 20.0)
+    let _vbox = {
+        let par = VBoxPar::new();
+        par.set_spacing(&gui,10.0)
             .set_background_style("red")
-            .set_position(&gui, &Relative(50.0), &Relative(100.0))
-            .set_valignment(&gui, Bottom)
+            .set_padding(&gui,Padding::same(5.0))
+            .set_position(&gui, &Relative(50.0), &Relative(50.0))
+            .set_valignment(&gui, Center)
             .set_halignment(&gui, Middle);
-        gui.add_child(root_pane, Pane(par))
+        gui.add_child(root_pane, VBox(par))
+    };
+
+    let _label1 = {
+        let par = LabelPar::new();
+        par.set_text(&gui,"Label 1")
+            .set_padding(&gui,Padding::new(0.0,5.0,0.0,5.0));
+        gui.add_child(_vbox,Label(par))
+    };
+
+    let _label2 = {
+        let par = LabelPar::new();
+        par.set_text(&gui,"Long label with several words")
+        .set_padding(&gui,Padding::new(0.0,5.0,0.0,5.0));
+        gui.add_child(_vbox,Label(par))
+    };
+
+    let _label3 = {
+        let par = LabelPar::new();
+        par.set_text(&gui,"3")
+            .set_padding(&gui,Padding::new(0.0,5.0,0.0,5.0))
+            .enable_fill_width(&gui,Enabled {weight:1})
+        ;
+
+        gui.add_child(_vbox,Label(par))
     };
 
 
@@ -66,6 +97,8 @@ fn main() {
     let mut screen_size: Size = Size::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32);
 
     let offset = Vector2{x:0.0, y:0.0};
+
+    let root = gui.get_widget(root_pane).unwrap();
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
@@ -79,5 +112,9 @@ fn main() {
 
         gui.render(&mut d, &offset);
 
+        d.draw_line((screen_size.width()*0.5) as i32,
+                    0,
+                    (screen_size.width()*0.5) as i32,
+                    screen_size.height() as i32, Color::RED)
     }
 }

@@ -42,16 +42,16 @@ impl LabelPar {
         self
     }
 
-    pub fn set_text(&self, gui: &Gui, text: String) -> &LabelPar {
-        let borrowed_text = self.text.borrow();
-        let current_text = borrowed_text.as_ref();
-        if let Some(txt) = current_text {
-            if text.eq(txt) {
+    pub fn set_text(&self, gui: &Gui, text: &str) -> &LabelPar {
+        let is_text_valid = {
+            let current_text = self.text.borrow().as_ref().cloned();
+            Some(text.to_owned()).eq(&current_text)
+        };
+        if is_text_valid  {
                 return self;
-            }
         }
         self.widget_data.invalidate_preferred_size(gui);
-        self.text.replace(Some(text));
+        self.text.replace(Some(text.to_owned()));
         self
     }
 
@@ -97,12 +97,13 @@ impl RenderableWidget for LabelPar {
 
 
         if let Some(text) = self.text.borrow().as_ref() {
+            let padding = self.widget_data.model.padding.get();
             let content_layout = self.widget_data.geometry.content_layout.borrow();
+            let computed_size = self.widget_data.geometry.computed_size.get();
             let position = Vector2 {
-                x: content_layout.x + offset.x,
-                y: content_layout.y + offset.y,
+                x: content_layout.x + offset.x + (content_layout.width - computed_size.width() + padding.h_padding())*0.5,
+                y: content_layout.y + offset.y + (content_layout.height - computed_size.height() + padding.v_padding())*0.5,
             };
-
 
             let borrowed_text_style = self.widget_data.state.text_style.borrow();
             let text_style = borrowed_text_style.as_deref();
