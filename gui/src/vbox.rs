@@ -70,7 +70,7 @@ impl SizeComputer for VBoxPar {
 
         let computed = Size::new(max_width, summed_height).with_padding(&self.widget_data().model.padding.get());
 
-        let mut preferred = self.widget_data.model.user_preferred_size.get();
+        let mut preferred = self.widget_data.model.preferred_size.get();
         preferred.replace_empty_dimensions_and_max(&computed);
 
         return preferred.clone();

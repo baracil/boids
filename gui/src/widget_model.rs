@@ -19,7 +19,7 @@ pub struct WidgetModel {
     pub back_style_name: RefCell<String>,
     pub border_style_name: RefCell<String>,
 
-    pub user_preferred_size: Cell<Size>,
+    pub preferred_size: Cell<Size>,
 
     pub focusable: Cell<bool>,
     pub clickable: Cell<bool>,
@@ -42,7 +42,7 @@ impl WidgetModel {
             absolute_coordinate_x: Cell::new(true),
             fill_height: Cell::new(Disabled),
             fill_width: Cell::new(Disabled),
-            user_preferred_size: Cell::new(Default::default()),
+            preferred_size: Cell::new(Default::default()),
             text_style_name: RefCell::new("default".to_string()),
             back_style_name: RefCell::new("default".to_string()),
             border_style_name: RefCell::new("default".to_string()),

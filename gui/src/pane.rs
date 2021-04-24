@@ -67,7 +67,7 @@ impl SizeComputer for PanePar {
 
 
 
-        let mut user_preferred_size = self.widget_data.model.user_preferred_size.get();
+        let mut user_preferred_size = self.widget_data.model.preferred_size.get();
 
         user_preferred_size.replace_empty_dimensions_and_max(&children_size);
         user_preferred_size

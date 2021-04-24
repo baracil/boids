@@ -9,7 +9,7 @@ use crate::gui::Gui;
 
 /// Geometry of the widget obtained from the information contained in the model
 pub struct WidgetGeometry {
-    /// Preferred size
+    /// Computed size of the widget based on content, preferred size and available space
     pub computed_size: Cell<Size>,
 
     /// Size of the content base on the available space provided

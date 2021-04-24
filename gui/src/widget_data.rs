@@ -424,23 +424,23 @@ impl WidgetOp for WidgetData {
     }
 
     fn set_preferred_height(&self, gui: &Gui, height: f32) -> &dyn WidgetOp {
-        let size = self.model.user_preferred_size.get().with_height(height);
+        let size = self.model.preferred_size.get().with_height(height);
         self.set_preferred_size(gui, size);
         self
     }
 
     fn set_preferred_width(&self, gui: &Gui, width: f32) -> &dyn WidgetOp {
-        let size = self.model.user_preferred_size.get().with_width(width);
+        let size = self.model.preferred_size.get().with_width(width);
         self.set_preferred_size(gui, size);
         self
     }
 
     fn set_preferred_size(&self, gui: &Gui, size: Size) -> &dyn WidgetOp {
-        let current = self.model.user_preferred_size.get();
+        let current = self.model.preferred_size.get();
         if current.eq(&size) {
             return self;
         }
-        self.model.user_preferred_size.set(size);
+        self.model.preferred_size.set(size);
         self.invalidate_preferred_size(gui);
         self
     }

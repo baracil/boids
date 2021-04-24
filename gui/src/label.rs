@@ -80,7 +80,7 @@ impl SizeComputer for LabelPar {
         let padding = self.widget_data.model.padding.get();
         let text_size = self.measure_text().with_padding(&padding);
 
-        let mut preferred = self.widget_data.model.user_preferred_size.get();
+        let mut preferred = self.widget_data.model.preferred_size.get();
 
         preferred.replace_empty_dimensions_and_max(&text_size);
         preferred
