@@ -36,9 +36,9 @@ impl LayoutableWidget for Widget {
 
     fn update_child_positions(&self, gui: &Gui) {
         match self {
-            Widget::Label(p) => p.compute_child_positions(gui),
-            Widget::Pane(p) => p.compute_child_positions(gui),
-            Widget::VBox(p) => p.compute_child_positions(gui),
+            Widget::Label(p) => p.update_child_positions(gui),
+            Widget::Pane(p) => p.update_child_positions(gui),
+            Widget::VBox(p) => p.update_child_positions(gui),
         }
     }
 }

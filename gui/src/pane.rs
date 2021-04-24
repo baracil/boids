@@ -130,16 +130,14 @@ impl RenderableWidget for PanePar {
         let tree_index = tree_index.unwrap();
 
         let padding = self.widget_data.model.padding.get();
-        let mut target = offset.clone();
-        let widget_layout = self.widget_data.geometry.widget_layout.get();
-        target.x += widget_layout.x;
-        target.y += widget_layout.y;
 
 
         self.widget_data.render_background_and_border(d, &offset);
 
-        target.x += padding.left;
-        target.y += padding.top;
+        let mut target = offset.clone();
+        let widget_layout = self.widget_data.geometry.widget_layout.get();
+        target.x += widget_layout.x + padding.left;
+        target.y += widget_layout.y + padding.top;
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {

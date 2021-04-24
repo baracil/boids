@@ -122,6 +122,7 @@ impl Gui {
         if option_root.is_none() {
             return;
         }
+
         let mouse_position = d.get_mouse_position();
         let mouse_state = MouseState::new(d);
 

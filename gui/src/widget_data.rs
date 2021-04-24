@@ -39,9 +39,10 @@ impl WidgetData {
         {
             let borrowed_background = self.state.background.borrow();
             if let Some(background) = borrowed_background.as_deref() {
+                let armed = self.state.armed.get();
                 let hoovered = self.state.hoovered.get();
                 let child_hoovered = self.state.child_hoovered.get();
-                background.draw(d, &chrome_layout, hoovered && !child_hoovered)
+                background.draw(d, &chrome_layout, hoovered && !child_hoovered, armed)
             }
         }
         {
@@ -227,12 +228,10 @@ impl WidgetData {
 
     pub fn update_action(&self, gui:&Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState)  {
         let mut armed = self.state.armed.get();
-        if !self.state.hoovered.get() {
-            armed &= mouse_state.left.down;
-            self.state.armed.set(armed);
-            return
-        }
-        if mouse_state.left.released && self.model.clickable.get() {
+        let clickable = self.model.clickable.get();
+        let hoovered = self.state.hoovered.get();
+
+        if mouse_state.left.released && clickable && hoovered {
             let action_id = self.model.action_id.clone().into_inner();
             match (armed, action_id) {
                 (true, Some(action_id)) => {
@@ -242,17 +241,18 @@ impl WidgetData {
             }
         }
 
-        if mouse_state.left.pressed {
-            armed = true;
+        if mouse_state.left.pressed && hoovered {
+            armed = clickable;
         }
+
         armed &= mouse_state.left.down;
 
         self.state.armed.set(armed);
 
         if let Some(idx) = self.tree_index {
             for child_index in gui.get_widget_children(idx) {
-                let content_layout = self.geometry.content_layout.get();
-                let child_offset = Vector2::new(content_layout.x+offset.x, content_layout.y+offset.y);
+                let widget_layout = self.geometry.widget_layout.get();
+                let child_offset = Vector2::new(widget_layout.x+offset.x, widget_layout.y+offset.y);
                 if let Some(w) = gui.get_widget(child_index) {
                     w.widget_data().update_action(gui,&child_offset,mouse_position,mouse_state);
                 }

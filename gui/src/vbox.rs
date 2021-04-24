@@ -135,22 +135,23 @@ impl WidgetSpecific for VBoxPar {
         }
         let tree_index = tree_index.unwrap();
 
-        let content_layout = self.widget_data.geometry.content_layout.get();
-        let padding = self.widget_data.model.padding.get();
+        let content_size = {
+            let content_layout = self.widget_data().geometry.content_layout.get();
+            Size::new(content_layout.width, content_layout.height)
+        };
+
         let spacing = self.spacing.get();
 
-        let mut position = Vector2::new(padding.left, padding.top);
-
+        let mut position = Vector2::new(0.0,0.0);
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
                 {
                     let borrow_widget_size = w.widget_data().geometry.widget_size.borrow();
-                    position.x = padding.left + (content_layout.width - borrow_widget_size.size().width())*0.5;
+                    position.x = (content_size.width() - borrow_widget_size.size().width())*0.5;
                     w.widget_data().set_widget_target(&position);
                     w.update_child_positions(gui);
                 }
                 let borrowed_widget_layout = w.widget_data().geometry.widget_layout.get();
-
 
                 position.y += borrowed_widget_layout.height + spacing;
             }
@@ -168,16 +169,16 @@ impl RenderableWidget for VBoxPar {
 
         self.widget_data.render_background_and_border(d, &offset);
 
-
+        let padding = self.widget_data.model.padding.get();
+        let mut target = offset.clone();
         let widget_layout = self.widget_data.geometry.widget_layout.get();
-        let mut inner_offset = offset.clone();
-        inner_offset.x += widget_layout.x;
-        inner_offset.y += widget_layout.y;
+        target.x += widget_layout.x + padding.left;
+        target.y += widget_layout.y + padding.top;
 
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
-                w.render(gui,d,&inner_offset);
+                w.render(gui,d,&target);
             }
         }
 

@@ -6,6 +6,7 @@ pub struct MouseState {
     pub right: MouseButtonState,
 }
 
+#[derive(Debug)]
 pub struct MouseButtonState {
     ///the button is pushed
     pub down: bool,
