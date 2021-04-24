@@ -1,5 +1,8 @@
-use std::cell::{Cell};
+use std::cell::Cell;
 use std::ops::BitAnd;
+use std::ops::Deref;
+use std::rc::Rc;
+use std::borrow::BorrowMut;
 
 use generational_arena::Index;
 use raylib::prelude::*;
@@ -7,16 +10,19 @@ use vec_tree::VecTree;
 
 use crate::alignment::{HAlignment, VAlignment};
 use crate::fill::Fill;
-use crate::fill::Fill::Disabled;
-use crate::gui::{Gui};
+use crate::fill::Fill::{Disabled, Enabled};
+use crate::gui::{Gui, GuiData};
 use crate::mouse::MouseState;
 use crate::padding::Padding;
 use crate::size::Size;
+use crate::text_style::TextStyle;
 use crate::widget::Widget;
 use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
-use crate::widget_operation::{DirtyFlags, UpdatableWidget, WidgetOp};
+use crate::widget_operation::{DirtyFlags, UpdatableWidget, WidgetOp, LayoutableWidget, SizeComputer, WidgetDataProvider};
 use crate::widget_state::WidgetState;
+use crate::background::BackgroundRenderer;
+use crate::border::BorderRenderer;
 
 pub struct WidgetData {
     pub tree_index: Option<Index>,
@@ -25,7 +31,39 @@ pub struct WidgetData {
     pub model: WidgetModel,
 }
 
+
 impl WidgetData {
+    pub(crate) fn render_background_and_border(&self, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
+        let mut chrome_layout = self.geometry.widget_layout.to_owned().into_inner();
+        chrome_layout.x += offset.x;
+        chrome_layout.y += offset.y;
+        {
+            let mut borrowed_background = self.state.background.borrow();
+            if let Some(background) = borrowed_background.as_deref() {
+                background.draw(d, &chrome_layout)
+            }
+        }
+        {
+            let borrowed_border = &self.state.border.borrow();
+            if let Some(border) = borrowed_border.as_deref() {
+                border.draw(d, &chrome_layout)
+            }
+        }
+    }
+}
+
+impl WidgetData {
+    pub(crate) fn get_height_weight(&self) -> u32 {
+        self.model.fill_height.get().get_weight()
+    }
+
+    pub(crate) fn get_width_weight(&self) -> u32 {
+        self.model.fill_height.get().get_weight()
+    }
+
+    fn get_computed_size(&self) -> Size {
+        self.geometry.computed_size.get()
+    }
 
     fn get_parent<'a>(&self, gui: &'a Gui) -> Option<&'a Widget> {
         match self.tree_index {
@@ -36,6 +74,27 @@ impl WidgetData {
         }
     }
 
+    pub fn compute_target(position: f32, absolute: bool, available: f32) -> f32 {
+        if absolute {
+            return position;
+        }
+        position * 0.01 * available
+    }
+
+    pub fn is_relative_coordinate_y(&self)->bool {
+        !self.geometry.absolute_coordinate_y.get()
+    }
+
+    pub fn is_relative_coordinate_x(&self)->bool {
+        !self.geometry.absolute_coordinate_x.get()
+    }
+
+
+
+    pub fn invalidate_style(&self) {
+        self.set_dirty_flag(DirtyFlags::STYLE)
+    }
+
     pub fn invalidate_preferred_size(&self, gui: &Gui) {
         self.invalidate_flag(gui, DirtyFlags::PREFERRED_SIZE);
     }
@@ -44,22 +103,71 @@ impl WidgetData {
         self.invalidate_flag(gui, DirtyFlags::CONTENT_SIZE);
     }
 
-    pub fn invalidate_size(&self, gui: &Gui) {
-        self.invalidate_flag(gui, DirtyFlags::SIZE);
-    }
-
     pub fn invalidate_position(&self, gui: &Gui) {
         self.invalidate_flag(gui, DirtyFlags::POSITION);
     }
 
-    fn invalidate_flag(&self, gui:&Gui, flag:DirtyFlags) {
+    fn invalidate_flag(&self, gui: &Gui, flag: DirtyFlags) {
         if self.is_dirty_flag_set(flag) {
-            return
+            return;
         }
         self.set_dirty_flag(flag);
         if let Some(parent) = self.get_parent(gui) {
-            parent.widget_data().invalidate_flag(gui,flag)
+            parent.widget_data().invalidate_flag(gui, flag)
         }
+    }
+
+    pub fn update_style(&self, gui: &Gui) {
+        if self.dirty_flag_clean(DirtyFlags::STYLE) {
+            return;
+        }
+
+        self.update_text_style(gui);
+        self.update_background(gui);
+        self.update_border(gui);
+
+        self.invalidate_preferred_size(gui)
+    }
+
+    fn update_text_style(&self, gui: &Gui) {
+        let borrowed = self.model.text_style_name.borrow();
+        let text_style = gui.get_text_style(borrowed.deref());
+        self.state.text_style.replace(text_style);
+    }
+
+    fn update_background(&self, gui: &Gui) {
+        let borrowed = self.model.back_style_name.borrow();
+        let background = gui.get_background(borrowed.deref());
+        self.state.background.replace(background);
+    }
+
+    fn update_border(&self, gui: &Gui) {
+        let borrowed = self.model.border_style_name.borrow();
+        let border = gui.get_border(borrowed.deref());
+        self.state.border.replace(border);
+    }
+
+    pub fn update_my_position(&self,available_space:&Size) {
+        // let target = self.compute_target(available_space);
+        // {
+        //     let mut widget_layout = self.geometry.widget_layout.borrow_mut();
+        //     widget_layout.x = target.x;
+        //     widget_layout.y = target.y;
+        // }
+        // {
+        //     let padding = self.model.padding.get();
+        //     let mut content_layout = self.geometry.content_layout.borrow_mut();
+        //     content_layout.x = target.x+padding.left;
+        //     content_layout.y = target.y+padding.top;
+        // }
+        todo!()
+    }
+
+    pub fn is_fill_height_or_relative_y(&self) -> bool {
+        self.model.fill_height.get().is_enabled() || !self.geometry.absolute_coordinate_y.get()
+    }
+    pub fn is_fill_width_or_relative_x(&self) -> bool {
+        self.model.fill_width.get().is_enabled() || !self.geometry.absolute_coordinate_x.get()
     }
 }
 
@@ -74,13 +182,13 @@ impl WidgetData {
     }
 
     pub fn set_alignment(&self, gui: &Gui, valignment: VAlignment, haligment: HAlignment) {
-        let mut current_alignment = self.geometry.alignment.get();
+        let mut current_alignment = self.model.alignment.get();
         if current_alignment.vertical.eq(&valignment) && current_alignment.horizontal.eq(&haligment) {
             return;
         }
         current_alignment.vertical = valignment;
         current_alignment.horizontal = haligment;
-        self.geometry.alignment.set(current_alignment);
+        self.model.alignment.set(current_alignment);
         self.invalidate_position(gui)
     }
 
@@ -93,47 +201,11 @@ impl WidgetData {
     }
 
     pub fn fill_width(&self) -> Fill {
-        self.geometry.fill_width.get()
+        self.model.fill_width.get()
     }
 
     pub fn fill_height(&self) -> Fill {
-        self.geometry.fill_height.get()
-    }
-
-    pub fn update(&mut self, _mouse_position: &Vector2, _mouse_state: &MouseState) {
-        todo!()
-    }
-
-    pub fn set_dirty_flag(&self, flag: DirtyFlags) {
-        self.state.dirty_flags.set(self.state.dirty_flags.get() | flag);
-    }
-
-    pub fn is_dirty_flag_set(&self, flag: DirtyFlags) -> bool {
-        self.state.dirty_flags.get().bitand(flag).eq(&flag)
-    }
-
-    pub fn dirty_flag_clean(&self, flag: DirtyFlags) -> bool {
-        self.state.dirty_flag_clean(flag)
-    }
-
-    pub fn update_widget_size(&self, gui: &Gui) {
-        if self.state.dirty_flag_clean(DirtyFlags::SIZE) {
-            return;
-        }
-        let borrowed_content_size = self.geometry.content_size.borrow();
-        let content_size = borrowed_content_size.size();
-
-        self.geometry.widget_size.replace(content_size.with_padding(&self.model.padding.get()));
-        self.invalidate_position(gui);
-    }
-
-    pub fn compute_position(&mut self, available_size: &Size) {
-        if self.state.dirty_flag_clean(DirtyFlags::POSITION) {
-            return;
-        }
-        self.geometry.copy_size_to_layout();
-        self.geometry.compute_item_position(available_size);
-        self.geometry.compute_content_position();
+        self.model.fill_height.get()
     }
 
     fn disable_fill(&self, gui: &Gui, fill: &Cell<Fill>) {
@@ -163,74 +235,148 @@ impl WidgetData {
         self.invalidate_preferred_size(gui)
     }
 
-    pub fn get_myself<'a>(&self, tree: &'a VecTree<Widget>) -> Option<&'a Widget> {
-        self.tree_index.and_then(|idx| {
-            tree.get(idx)
-        })
+    pub fn update(&mut self, _mouse_position: &Vector2, _mouse_state: &MouseState) {
+        todo!()
+    }
+
+    pub fn set_dirty_flag(&self, flag: DirtyFlags) {
+        self.state.dirty_flags.set(self.state.dirty_flags.get() | flag);
+    }
+
+    pub fn is_dirty_flag_set(&self, flag: DirtyFlags) -> bool {
+        self.state.dirty_flags.get().bitand(flag).eq(&flag)
+    }
+
+    pub fn dirty_flag_clean(&self, flag: DirtyFlags) -> bool {
+        self.state.dirty_flag_clean(flag)
+    }
+
+    pub fn dirty_flag_dirty(&self, flag: DirtyFlags) -> bool {
+        !self.state.dirty_flag_clean(flag)
+    }
+
+    pub fn copy_size_to_layout(&self) {
+        let borrowed_widget_size = self.geometry.widget_size.borrow();
+        let widget_size = borrowed_widget_size.size();
+
+        {
+            WidgetGeometry::copy_size(widget_size, &self.geometry.widget_layout);
+            let content_size = widget_size.without_padding(&self.model.padding.get());
+            WidgetGeometry::copy_size(&content_size, &self.geometry.content_layout);
+        }
+    }
+
+    pub(crate) fn compute_default_target(&self, available_size:&Size) {
+        let position = self.model.position.get();
+        let mut offset = self.compute_alignment_offset();
+
+        offset.x += WidgetData::compute_target(position.x,self.geometry.absolute_coordinate_x.get(), available_size.width());
+        offset.y += WidgetData::compute_target(position.y,self.geometry.absolute_coordinate_y.get(), available_size.height());
+
+        self.set_widget_target(&offset);
+    }
+
+    pub fn set_widget_target(&self, target:&Vector2) {
+        let padding = self.model.padding.get();
+        let mut borrow_widget = self.geometry.widget_layout.borrow_mut();
+        let mut borrow_content = self.geometry.content_layout.borrow_mut();
+
+        borrow_widget.x = target.x;
+        borrow_widget.y = target.y;
+
+        borrow_content.x = target.x + padding.left;
+        borrow_content.y = target.y + padding.top;
+    }
+
+    pub fn compute_alignment_offset(&self) -> Vector2 {
+        let borrowed_widget_size = self.geometry.widget_size.borrow();
+        let widget_size = borrowed_widget_size.size();
+        let alignment = self.model.alignment.get();
+
+        let mut offset = Vector2::default();
+
+        offset.x = widget_size.width() * alignment.horizontal.shift_factor();
+        offset.y = widget_size.height() * alignment.vertical.shift_factor();
+
+        offset
     }
 }
 
-// impl<N: WidgetDataProvider + SizeableWidget> LayoutableWidget for N {
-//     fn layout(&mut self, available_size: &Size) {
-// {
-//     self.widget_data().gui_data
-// }
-//         {
-// //            compute_tree_style(&self.myself());
-//         }
-//
-//         {
-//             let children = self.children();
-//             let mut sum_width_weight: u32 = 0;
-//             let mut sum_height_weight: u32 = 0;
-//             let mut used_width = 0.0;
-//             let mut used_height = 0.0;
-//             for child in children {
-//                 // let data = child.borrow().widget_data();
-//                 // sum_height_weight = data.fill_height_weight();
-//                 // sum_width_weight = data.fill_width_weight();
-//             }
-//         }
-//
-//         if !self.widget_data_mut().unset_dirty_flag(DirtyFlags::CONTENT_SIZE) {
-//             let content_size = self.compute_content_size(available_size);
-//             self.widget_data_mut().geometry.content_size = content_size;
-//         }
-//
-//         self.widget_data_mut().compute_item_size();
-//         self.widget_data_mut().compute_position();
-//     }
-// }
-
-
 impl<N: WidgetDataProvider> UpdatableWidget for N {
-    fn update(&mut self, mouse_position: &Vector2, mouse_state: &MouseState) {
+    fn update_with_mouse_information(&mut self, mouse_position: &Vector2, mouse_state: &MouseState) {
         self.widget_data_mut().update(mouse_position, mouse_state)
     }
 }
 
-pub trait WidgetDataProvider {
-    fn widget_data(&self) -> &WidgetData;
-    fn widget_data_mut(&mut self) -> &mut WidgetData;
-}
 
-pub trait SizeableWidget {
-    fn update_preferred_size(&self, gui: &Gui);
-    fn update_content_size(&self, gui: &Gui, available_space: &Size);
-}
+impl<N: SizeComputer + WidgetDataProvider> LayoutableWidget for N {
 
+    fn get_computed_size(&self, gui: &Gui) -> Size {
+        if self.widget_data().dirty_flag_dirty(DirtyFlags::PREFERRED_SIZE) {
+            let size = self.compute_size(gui);
+            self.widget_data().geometry.computed_size.set(size);
+            self.widget_data().invalidate_content_size(gui);
+            return size;
+        }
+
+        return self.widget_data().geometry.computed_size.get();
+    }
+
+
+    fn update_content_size(&self, gui: &Gui, available_space: &Size) {
+        let content_invalid = {
+            let content_cache = self.widget_data().geometry.widget_size.borrow();
+            let clean_flag = self.widget_data().dirty_flag_clean(DirtyFlags::CONTENT_SIZE);
+            let cache_valid = available_space.eq(content_cache.reference());
+            !clean_flag || !cache_valid
+        };
+
+        if content_invalid {
+            let mut content_size = self.widget_data().geometry.computed_size.clone().into_inner();
+
+            if let Enabled { .. } = self.widget_data().model.fill_width.get() {
+                content_size.set_width(available_space.width())
+            }
+            if let Enabled { .. } = self.widget_data().model.fill_height.get() {
+                content_size.set_height(available_space.height())
+            }
+            content_size.min_mut(&available_space);
+
+
+            self.compute_child_content_size(gui, content_size);
+
+            {
+                let mut content_cache = self.widget_data().geometry.widget_size.borrow_mut();
+                content_cache.set_reference(available_space.clone());
+                content_cache.set_size(content_size);
+            }
+
+            self.widget_data().copy_size_to_layout();
+            self.widget_data().invalidate_position(gui);
+        }
+    }
+
+    fn update_child_positions(&self, gui: &Gui) {
+        if self.widget_data().state.dirty_flag_clean(DirtyFlags::POSITION) {
+            return;
+        }
+        self.compute_child_positions(gui);
+    }
+}
 
 impl WidgetOp for WidgetData {
-    fn content_width(&self) -> f32 {
-        self.geometry.content_size.borrow().size().width()
-    }
-    fn content_height(&self) -> f32 {
-        self.geometry.content_size.borrow().size().height()
+    fn set_text_style(&self, text_style_name: &str) -> &dyn WidgetOp {
+        self.model.text_style_name.replace(text_style_name.to_string());
+        self.invalidate_style();
+        self
     }
 
-    fn padding(&self) -> Padding {
-        self.model.padding.get()
+    fn set_background_style(&self, background_style_name: &str) -> &dyn WidgetOp {
+        self.model.back_style_name.replace(background_style_name.to_string());
+        self.invalidate_style();
+        self
     }
+
 
     fn set_absolute_coordinate_y(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
         self.set_absolute(gui, &self.geometry.absolute_coordinate_y, absolute);
@@ -244,25 +390,25 @@ impl WidgetOp for WidgetData {
 
 
     fn set_position(&self, gui: &Gui, x: f32, y: f32) -> &dyn WidgetOp {
-        let mut current_position = self.geometry.target.get();
+        let mut current_position = self.model.position.get();
         if current_position.x.eq(&x) && current_position.y.eq(&y) {
             return self;
         }
         current_position.x = x;
         current_position.y = y;
-        self.geometry.target.set(current_position);
-        //dirty
+        self.model.position.set(current_position);
+        self.invalidate_position(gui);
         self
     }
 
     fn set_valignment(&self, gui: &Gui, valignment: VAlignment) -> &dyn WidgetOp {
-        let current_alignment = self.geometry.alignment.get();
+        let current_alignment = self.model.alignment.get();
         self.set_alignment(gui, valignment, current_alignment.horizontal);
         self
     }
 
     fn set_halignment(&self, gui: &Gui, halignment: HAlignment) -> &dyn WidgetOp {
-        let current_alignment = self.geometry.alignment.get();
+        let current_alignment = self.model.alignment.get();
         self.set_alignment(gui, current_alignment.vertical, halignment);
         self
     }
@@ -277,76 +423,64 @@ impl WidgetOp for WidgetData {
         self
     }
 
-    fn clear_requested_size(&self, gui: &Gui) -> &dyn WidgetOp {
-        self.set_requested_size(gui, Size::empty());
-        self.invalidate_preferred_size(gui);
+    fn set_preferred_height(&self, gui: &Gui, height: f32) -> &dyn WidgetOp {
+        let size = self.model.user_preferred_size.get().with_height(height);
+        self.set_preferred_size(gui, size);
         self
     }
 
-    fn set_requested_height(&self, gui: &Gui, height: f32) -> &dyn WidgetOp {
-        let size = self.geometry.requested_size.get().with_height(height);
-        self.set_requested_size(gui, size);
-        self.invalidate_preferred_size(gui);
+    fn set_preferred_width(&self, gui: &Gui, width: f32) -> &dyn WidgetOp {
+        let size = self.model.user_preferred_size.get().with_width(width);
+        self.set_preferred_size(gui, size);
         self
     }
 
-    fn set_requested_width(&self, gui: &Gui, width: f32) -> &dyn WidgetOp {
-        let size = self.geometry.requested_size.get().with_width(width);
-        self.set_requested_size(gui, size);
-        self.invalidate_preferred_size(gui);
-        self
-    }
-
-    fn set_requested_size(&self, gui: &Gui, size: Size) -> &dyn WidgetOp {
-        let current = self.geometry.requested_size.get();
+    fn set_preferred_size(&self, gui: &Gui, size: Size) -> &dyn WidgetOp {
+        let current = self.model.user_preferred_size.get();
         if current.eq(&size) {
             return self;
         }
-        self.geometry.requested_size.set(size);
+        self.model.user_preferred_size.set(size);
         self.invalidate_preferred_size(gui);
         self
     }
 
     fn disable_fill_width(&self, gui: &Gui) -> &dyn WidgetOp {
-        self.disable_fill(gui, &self.geometry.fill_width);
+        self.disable_fill(gui, &self.model.fill_width);
         self
     }
 
     fn disable_fill_height(&self, gui: &Gui) -> &dyn WidgetOp {
-        self.disable_fill(gui, &self.geometry.fill_height);
+        self.disable_fill(gui, &self.model.fill_height);
         self
     }
 
     fn enable_fill_width(&self, gui: &Gui, fill: Fill) -> &dyn WidgetOp {
-        self.enable_fill(gui, &self.geometry.fill_width, fill);
+        self.enable_fill(gui, &self.model.fill_width, fill);
         self
     }
 
     fn enable_fill_height(&self, gui: &Gui, fill: Fill) -> &dyn WidgetOp {
-        self.enable_fill(gui, &self.geometry.fill_height, fill);
+        self.enable_fill(gui, &self.model.fill_height, fill);
         self
     }
 }
 
 impl<M: WidgetDataProvider> WidgetOp for M {
-    fn content_width(&self) -> f32 {
-        self.widget_data().content_width()
+    fn set_text_style(&self, text_style_name: &str) -> &dyn WidgetOp {
+        self.widget_data().set_text_style(text_style_name)
     }
 
-    fn content_height(&self) -> f32 {
-        self.widget_data().content_height()
-    }
-
-    fn padding(&self) -> Padding {
-        self.widget_data().padding()
-    }
-
-    fn set_absolute_coordinate_x(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
-        self.widget_data().set_absolute_coordinate_x(gui, absolute)
+    fn set_background_style(&self, background_style_name: &str) -> &dyn WidgetOp {
+        self.widget_data().set_background_style(background_style_name)
     }
 
     fn set_absolute_coordinate_y(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
         self.widget_data().set_absolute_coordinate_y(gui, absolute)
+    }
+
+    fn set_absolute_coordinate_x(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
+        self.widget_data().set_absolute_coordinate_x(gui, absolute)
     }
 
     fn set_position(&self, gui: &Gui, x: f32, y: f32) -> &dyn WidgetOp {
@@ -365,20 +499,16 @@ impl<M: WidgetDataProvider> WidgetOp for M {
         self.widget_data().set_padding(gui, padding)
     }
 
-    fn clear_requested_size(&self, gui: &Gui) -> &dyn WidgetOp {
-        self.widget_data().clear_requested_size(gui)
+    fn set_preferred_height(&self, gui: &Gui, height: f32) -> &dyn WidgetOp {
+        self.widget_data().set_preferred_height(gui, height)
     }
 
-    fn set_requested_height(&self, gui: &Gui, height: f32) -> &dyn WidgetOp {
-        self.widget_data().set_requested_height(gui, height)
+    fn set_preferred_width(&self, gui: &Gui, width: f32) -> &dyn WidgetOp {
+        self.widget_data().set_preferred_width(gui, width)
     }
 
-    fn set_requested_width(&self, gui: &Gui, width: f32) -> &dyn WidgetOp {
-        self.widget_data().set_requested_width(gui, width)
-    }
-
-    fn set_requested_size(&self, gui: &Gui, size: Size) -> &dyn WidgetOp {
-        self.widget_data().set_requested_size(gui, size)
+    fn set_preferred_size(&self, gui: &Gui, size: Size) -> &dyn WidgetOp {
+        self.widget_data().set_preferred_size(gui, size)
     }
 
     fn disable_fill_width(&self, gui: &Gui) -> &dyn WidgetOp {

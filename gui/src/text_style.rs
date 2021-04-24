@@ -11,8 +11,8 @@ pub struct TextStyle {
 }
 
 impl TextStyle {
-    pub fn default(font:Rc<FontInfo>) -> Self {
-        Self{font:font.clone(), color:Color::BLACK, spacing:0.0}
+    pub fn new(font:Rc<FontInfo>, color:Color, spacing:f32) -> Self {
+        Self{font:font.clone(), color, spacing}
     }
 
     pub fn color(&self) -> &Color {

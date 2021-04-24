@@ -72,6 +72,14 @@ impl Size {
         self
     }
 
+    pub fn replace_empty_dimensions_and_max(&mut self, other:&Size) -> &mut Size {
+        let width = if self.width <= 0.0 {other.width} else {self.width};
+        let height = if self.height <= 0.0 {other.height} else {self.height};
+        self.width = width.max(other.width);
+        self.height = height.max(other.height);
+        self
+    }
+
     pub fn new(width:f32, height:f32) -> Self {
         Size{width:width.max(0.0), height:height.max(0.0)}
     }

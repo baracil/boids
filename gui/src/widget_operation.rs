@@ -6,25 +6,23 @@ use crate::gui::{Gui};
 use crate::mouse::MouseState;
 use crate::padding::Padding;
 use crate::size::Size;
+use crate::widget_data::WidgetData;
 
 bitflags! {
     pub struct DirtyFlags: u32 {
+        const STYLE = 1;
         const PREFERRED_SIZE = 2;
         const CONTENT_SIZE = 4;
-        const SIZE = 8;
-        const POSITION = 16;
+        const POSITION = 8;
 
-        const ALL = 31;
+        const ALL = 15;
     }
 }
 
 pub trait WidgetOp {
-    /// the width of the content (computed)
-    fn content_width(&self) -> f32;
-    fn content_height(&self) -> f32;
 
-    /// padding around the content
-    fn padding(&self) -> Padding;
+    fn set_text_style(&self, text_style_name:&str) -> &dyn WidgetOp;
+    fn set_background_style(&self, background_style_name:&str) -> &dyn WidgetOp;
 
     /// set the position of this node
     fn set_position_vec(&self,gui:&Gui, point: &Vector2, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
@@ -48,10 +46,13 @@ pub trait WidgetOp {
 
     fn set_padding(&self,gui:&Gui, padding: Padding)  -> &dyn WidgetOp;
 
-    fn clear_requested_size(&self,gui:&Gui)  -> &dyn WidgetOp;
-    fn set_requested_height(&self,gui:&Gui, height: f32)  -> &dyn WidgetOp;
-    fn set_requested_width(&self,gui:&Gui, width: f32)  -> &dyn WidgetOp;
-    fn set_requested_size(&self,gui:&Gui, size: Size)  -> &dyn WidgetOp;
+    fn clear_preferred_size(&self,gui:&Gui)  -> &dyn WidgetOp {
+        self.set_preferred_size(gui,Size::empty())
+    }
+
+    fn set_preferred_height(&self,gui:&Gui, height: f32)  -> &dyn WidgetOp;
+    fn set_preferred_width(&self,gui:&Gui, width: f32)  -> &dyn WidgetOp;
+    fn set_preferred_size(&self,gui:&Gui, size: Size)  -> &dyn WidgetOp;
 
     fn disable_fill_width(&self,gui:&Gui) -> &dyn WidgetOp;
     fn disable_fill_height(&self,gui:&Gui) -> &dyn WidgetOp;
@@ -61,13 +62,29 @@ pub trait WidgetOp {
 
 }
 
+pub trait SizeComputer {
+    fn compute_size(&self, gui:&Gui) -> Size;
+    fn compute_child_content_size(&self, gui:&Gui, available_size:Size);
+    fn compute_child_positions(&self, gui:&Gui);
+}
+
+pub trait LayoutableWidget {
+    fn get_computed_size(&self, gui: &Gui) -> Size;
+    fn update_content_size(&self, gui: &Gui, available_space: &Size);
+    fn update_child_positions(&self, gui:&Gui);
+}
 
 pub trait UpdatableWidget {
     /// update state (armed, hoover, clicked) with current mouse position and mouse button states
-    fn update(&mut self, mouse_position: &Vector2, mouse_state: &MouseState);
+    fn update_with_mouse_information(&mut self, mouse_position: &Vector2, mouse_state: &MouseState);
 }
 
 pub trait RenderableWidget {
     /// draw the node
-    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, position:Vector2);
+    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, offset:&Vector2, available_size:&Size);
+}
+
+pub trait WidgetDataProvider {
+    fn widget_data(&self) -> &WidgetData;
+    fn widget_data_mut(&mut self) -> &mut WidgetData;
 }

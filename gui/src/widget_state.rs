@@ -11,6 +11,9 @@ pub struct WidgetState {
     pub text_style: RefCell<Option<Rc<TextStyle>>>,
     pub background: RefCell<Option<Rc<Background>>>,
     pub border: RefCell<Option<Rc<Border>>>,
+    pub armed: Cell<bool>,
+    pub hoovered: Cell<bool>,
+
 }
 
 impl WidgetState {
@@ -20,6 +23,8 @@ impl WidgetState {
             text_style: RefCell::new(None),
             background: RefCell::new(None),
             border: RefCell::new(None),
+            armed: Cell::new(false),
+            hoovered: Cell::new(false),
         }
     }
 

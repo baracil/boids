@@ -2,27 +2,27 @@
 
 
 use crate::label::LabelPar;
-use crate::widget_data::{SizeableWidget, WidgetDataProvider, WidgetData};
-use crate::widget_operation::{RenderableWidget};
+use crate::widget_data::{WidgetData};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, SizeComputer};
 use raylib::core::drawing::RaylibDrawHandle;
 use crate::pane::PanePar;
 use crate::gui::{Gui};
-use crate::hbox::HBoxPar;
+use crate::vbox::VBoxPar;
 use crate::size::Size;
 use raylib::math::Vector2;
 
 pub enum  Widget {
     Label(LabelPar),
     Pane(PanePar),
-    HBox(HBoxPar)
+    VBox(VBoxPar)
 }
 
-impl SizeableWidget for Widget {
-    fn update_preferred_size(&self, gui:&Gui) {
+impl LayoutableWidget for Widget {
+    fn get_computed_size(&self, gui:&Gui) -> Size {
         match &self {
-            Widget::Label(p) => p.update_preferred_size(gui),
-            Widget::Pane(p) => p.update_preferred_size(gui),
-            Widget::HBox(p) => p.update_preferred_size(gui),
+            Widget::Label(p) => p.get_computed_size(gui),
+            Widget::Pane(p) => p.get_computed_size(gui),
+            Widget::VBox(p) => p.get_computed_size(gui),
         }
     }
 
@@ -30,10 +30,17 @@ impl SizeableWidget for Widget {
         match self {
             Widget::Label(p) => p.update_content_size(gui, available_space),
             Widget::Pane(p) => p.update_content_size(gui, available_space),
-            Widget::HBox(p) => p.update_content_size(gui, available_space),
+            Widget::VBox(p) => p.update_content_size(gui, available_space),
         }
     }
 
+    fn update_child_positions(&self, gui: &Gui) {
+        match self {
+            Widget::Label(p) => p.compute_child_positions(gui),
+            Widget::Pane(p) => p.compute_child_positions(gui),
+            Widget::VBox(p) => p.compute_child_positions(gui),
+        }
+    }
 }
 
 impl WidgetDataProvider for Widget {
@@ -42,7 +49,7 @@ impl WidgetDataProvider for Widget {
         match &self {
             Widget::Label(p) => p.widget_data(),
             Widget::Pane(p) => p.widget_data(),
-            Widget::HBox(p) => p.widget_data(),
+            Widget::VBox(p) => p.widget_data(),
         }
     }
 
@@ -50,17 +57,17 @@ impl WidgetDataProvider for Widget {
         match self {
             Widget::Label(p) => p.widget_data_mut(),
             Widget::Pane(p) => p.widget_data_mut(),
-            Widget::HBox(p) => p.widget_data_mut(),
+            Widget::VBox(p) => p.widget_data_mut(),
         }
     }
 }
 
 impl RenderableWidget for Widget {
-    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, position:Vector2) {
+    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, offset:&Vector2, available_space:&Size) {
         match self {
-            Widget::Label(p) => p.render(gui, d, position),
-            Widget::Pane(p) => p.render(gui, d, position),
-            Widget::HBox(p) => p.render(gui, d, position),
+            Widget::Label(p) => p.render(gui, d, offset,available_space),
+            Widget::Pane(p) => p.render(gui, d, offset,available_space),
+            Widget::VBox(p) => p.render(gui, d, offset,available_space),
         }
     }
 }
