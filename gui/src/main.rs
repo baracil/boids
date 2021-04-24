@@ -42,8 +42,8 @@ fn main() {
 
     gui.add_text_style("default","default",Color::BLACK,0.0);
     gui.add_border("default",Line {color:Color::BLACK, thickness:2.0});
-    gui.add_background("default",Solid {color:Color::SKYBLUE});
-    gui.add_background("red",Solid {color:Color::RED});
+    gui.add_background("default",Solid {color:Color::SKYBLUE, hoovered_color:Color::BLUE});
+    gui.add_background("red",Solid {color:Color::RED,hoovered_color:Color::ORANGE});
 
     let root_pane = {
         let par = PanePar::new();
@@ -52,7 +52,8 @@ fn main() {
             .set_padding(&gui,Padding::same(10.0))
             .set_position(&gui, &Relative(50.0),&Relative(50.0))
             .set_valignment(&gui, Center)
-            .set_halignment(&gui, Middle);
+            .set_halignment(&gui, Middle)
+            .set_action_id("ROOT");
         gui.insert_root(Pane(par))
     };
 
@@ -64,20 +65,25 @@ fn main() {
             .set_padding(&gui,Padding::same(5.0))
             .set_position(&gui, &Relative(50.0), &Relative(50.0))
             .set_valignment(&gui, Center)
-            .set_halignment(&gui, Middle);
+            .set_halignment(&gui, Middle)
+            .set_action_id("VBOX");
         gui.add_child(root_pane, VBox(par))
     };
 
     let _label1 = {
         let par = LabelPar::new();
         par.set_text(&gui,"Label 1")
-            .set_padding(&gui,Padding::new(0.0,5.0,0.0,5.0));
+            .set_action_id("Label1")
+            .set_clickable(true)
+        .set_padding(&gui,Padding::new(0.0,5.0,0.0,5.0));
         gui.add_child(_vbox,Label(par))
     };
 
     let _label2 = {
         let par = LabelPar::new();
         par.set_text(&gui,"Long label with several words")
+            .set_action_id("Label2")
+            .set_clickable(true)
         .set_padding(&gui,Padding::new(0.0,5.0,0.0,5.0));
         gui.add_child(_vbox,Label(par))
     };
@@ -86,6 +92,8 @@ fn main() {
         let par = LabelPar::new();
         par.set_text(&gui,"3")
             .set_padding(&gui,Padding::new(0.0,5.0,0.0,5.0))
+            .set_action_id("Label3")
+            .set_clickable(true)
             .enable_fill_width(&gui,Enabled {weight:1})
         ;
 
@@ -107,14 +115,13 @@ fn main() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32 );
         }
 
+        gui.update_states(&d, &offset);
         gui.layout(&screen_size);
+
         d.clear_background(Color::WHITE);
 
         gui.render(&mut d, &offset);
 
-        d.draw_line((screen_size.width()*0.5) as i32,
-                    0,
-                    (screen_size.width()*0.5) as i32,
-                    screen_size.height() as i32, Color::RED)
+        gui.display_events();
     }
 }

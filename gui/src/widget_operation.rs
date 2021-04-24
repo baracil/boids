@@ -25,6 +25,9 @@ pub trait WidgetOp {
     fn set_text_style(&self, text_style_name:&str) -> &dyn WidgetOp;
     fn set_background_style(&self, background_style_name:&str) -> &dyn WidgetOp;
 
+    fn set_action_id(&self, action_id:&str) -> &dyn WidgetOp;
+    fn clear_action_id(&self) -> &dyn WidgetOp;
+    fn set_clickable(&self,clickable:bool) -> &dyn WidgetOp;
     /// set the position of this node
     fn set_position_vec(&self,gui:&Gui, point: &Position, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
         self.set_position(gui,point.get_x(),point.get_y());
@@ -75,7 +78,7 @@ pub trait LayoutableWidget {
 
 pub trait UpdatableWidget {
     /// update state (armed, hoover, clicked) with current mouse position and mouse button states
-    fn update_with_mouse_information(&mut self, mouse_position: &Vector2, mouse_state: &MouseState);
+    fn update_with_mouse_information(&self, gui:&Gui, offset:&Vector2, mouse_position: &Vector2, mouse_state: &MouseState);
 }
 
 pub trait RenderableWidget {

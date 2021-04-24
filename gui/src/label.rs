@@ -9,6 +9,7 @@ use crate::widget_data::{WidgetData};
 use crate::widget_operation::{RenderableWidget, WidgetSpecific, WidgetDataProvider};
 use crate::gui::{Gui};
 use crate::size::{Size};
+use crate::mouse::MouseState;
 
 pub struct LabelPar {
     widget_data: WidgetData,
@@ -98,7 +99,7 @@ impl RenderableWidget for LabelPar {
 
         if let Some(text) = self.text.borrow().as_ref() {
             let padding = self.widget_data.model.padding.get();
-            let content_layout = self.widget_data.geometry.content_layout.borrow();
+            let content_layout = self.widget_data.geometry.content_layout.get();
             let computed_size = self.widget_data.geometry.computed_size.get();
             let position = Vector2 {
                 x: content_layout.x + offset.x + (content_layout.width - computed_size.width() + padding.h_padding())*0.5,

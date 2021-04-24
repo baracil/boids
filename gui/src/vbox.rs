@@ -135,7 +135,7 @@ impl WidgetSpecific for VBoxPar {
         }
         let tree_index = tree_index.unwrap();
 
-        let content_layout = self.widget_data.geometry.content_layout.borrow();
+        let content_layout = self.widget_data.geometry.content_layout.get();
         let padding = self.widget_data.model.padding.get();
         let spacing = self.spacing.get();
 
@@ -149,7 +149,7 @@ impl WidgetSpecific for VBoxPar {
                     w.widget_data().set_widget_target(&position);
                     w.update_child_positions(gui);
                 }
-                let borrowed_widget_layout = w.widget_data().geometry.widget_layout.borrow();
+                let borrowed_widget_layout = w.widget_data().geometry.widget_layout.get();
 
 
                 position.y += borrowed_widget_layout.height + spacing;
@@ -169,7 +169,7 @@ impl RenderableWidget for VBoxPar {
         self.widget_data.render_background_and_border(d, &offset);
 
 
-        let widget_layout = self.widget_data.geometry.widget_layout.borrow();
+        let widget_layout = self.widget_data.geometry.widget_layout.get();
         let mut inner_offset = offset.clone();
         inner_offset.x += widget_layout.x;
         inner_offset.y += widget_layout.y;

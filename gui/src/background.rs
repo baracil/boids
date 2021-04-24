@@ -2,24 +2,25 @@ use raylib::prelude::*;
 
 /// A background
 pub trait BackgroundRenderer {
-    fn draw(&self, d: &mut RaylibDrawHandle<'_>, layout: &Rectangle);
+    fn draw(&self, d: &mut RaylibDrawHandle<'_>, layout: &Rectangle, hoovered:bool);
 }
 
 
 pub enum Background {
     Empty,
     Solid {
-        color:Color
+        color:Color,
+        hoovered_color:Color,
     }
 }
 
 
 impl BackgroundRenderer for Background {
 
-    fn draw(&self, d: &mut RaylibDrawHandle<'_>, layout: &Rectangle) {
+    fn draw(&self, d: &mut RaylibDrawHandle<'_>, layout: &Rectangle, hoovered:bool) {
         match self {
             Background::Empty => {}
-            Background::Solid {color} => render_solid_background(d,layout, color)
+            Background::Solid {color,hoovered_color} => render_solid_background(d,layout, if hoovered {hoovered_color} else {color})
         }
     }
 }

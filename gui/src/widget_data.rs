@@ -20,6 +20,8 @@ use crate::widget_state::WidgetState;
 use crate::background::BackgroundRenderer;
 use crate::border::BorderRenderer;
 use crate::position::Coordinate;
+use vec_tree::ChildrenIter;
+use crate::event::Event::{Click};
 
 pub struct WidgetData {
     pub tree_index: Option<Index>,
@@ -37,7 +39,9 @@ impl WidgetData {
         {
             let borrowed_background = self.state.background.borrow();
             if let Some(background) = borrowed_background.as_deref() {
-                background.draw(d, &chrome_layout)
+                let hoovered = self.state.hoovered.get();
+                let child_hoovered = self.state.child_hoovered.get();
+                background.draw(d, &chrome_layout, hoovered && !child_hoovered)
             }
         }
         {
@@ -50,7 +54,6 @@ impl WidgetData {
 }
 
 impl WidgetData {
-
     fn get_parent<'a>(&self, gui: &'a Gui) -> Option<&'a Widget> {
         match self.tree_index {
             None => None,
@@ -67,14 +70,13 @@ impl WidgetData {
         position * 0.01 * available
     }
 
-    pub fn is_relative_coordinate_y(&self)->bool {
+    pub fn is_relative_coordinate_y(&self) -> bool {
         self.model.position.get().is_y_relative()
     }
 
-    pub fn is_relative_coordinate_x(&self)->bool {
+    pub fn is_relative_coordinate_x(&self) -> bool {
         self.model.position.get().is_x_relative()
     }
-
 
 
     pub fn invalidate_style(&self) {
@@ -196,8 +198,69 @@ impl WidgetData {
         self.invalidate_preferred_size(gui)
     }
 
-    pub fn update(&mut self, _mouse_position: &Vector2, _mouse_state: &MouseState) {
-        todo!()
+    pub fn update_hoovered(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) -> bool {
+        let mut abs_widget_layout = self.geometry.widget_layout.get();
+        abs_widget_layout.x += offset.x;
+        abs_widget_layout.y += offset.y;
+
+        let new_hoovered = abs_widget_layout.check_collision_point_rec(mouse_position);
+        let old_hoovered = self.state.hoovered.get();
+        self.state.hoovered.set(new_hoovered);
+        let mut child_hoovered = false;
+
+        match (self.tree_index, old_hoovered, new_hoovered) {
+            (_, false, false) | (None, _, _) => {}
+
+            (Some(idx), _, _) => {
+                let padding = self.model.padding.get();
+                let child_offset = Vector2::new(abs_widget_layout.x+padding.left, abs_widget_layout.y+padding.top);
+                for child_index in gui.get_widget_children(idx) {
+                    if let Some(w) = gui.get_widget(child_index) {
+                        child_hoovered |= w.widget_data().update_hoovered(gui, &child_offset, mouse_position, mouse_state)
+                    }
+                }
+            }
+        }
+        self.state.child_hoovered.set(child_hoovered);
+        new_hoovered
+    }
+
+    pub fn update_action(&self, gui:&Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState)  {
+        let mut armed = self.state.armed.get();
+        if !self.state.hoovered.get() {
+            armed &= mouse_state.left.down;
+            self.state.armed.set(armed);
+            return
+        }
+        if mouse_state.left.released && self.model.clickable.get() {
+            let action_id = self.model.action_id.clone().into_inner();
+            match (armed, action_id) {
+                (true, Some(action_id)) => {
+                    gui.add_event(Click{action_id })
+                }
+                _ => {}
+            }
+        }
+
+        if mouse_state.left.pressed {
+            armed = true;
+        }
+        armed &= mouse_state.left.down;
+
+        self.state.armed.set(armed);
+
+        if let Some(idx) = self.tree_index {
+            for child_index in gui.get_widget_children(idx) {
+                let content_layout = self.geometry.content_layout.get();
+                let child_offset = Vector2::new(content_layout.x+offset.x, content_layout.y+offset.y);
+                if let Some(w) = gui.get_widget(child_index) {
+                    w.widget_data().update_action(gui,&child_offset,mouse_position,mouse_state);
+                }
+
+            }
+        }
+
+
     }
 
     pub fn set_dirty_flag(&self, flag: DirtyFlags) {
@@ -227,23 +290,26 @@ impl WidgetData {
         }
     }
 
-    pub(crate) fn compute_default_target(&self, available_size:&Size) {
+    pub(crate) fn compute_default_target(&self, available_size: &Size) {
         let position = self.model.position.get().compute_absolute(available_size);
         let offset = self.compute_alignment_offset();
 
         self.set_widget_target(&position.add(offset));
     }
 
-    pub fn set_widget_target(&self, target:&Vector2) {
+    pub fn set_widget_target(&self, target: &Vector2) {
         let padding = self.model.padding.get();
-        let mut borrow_widget = self.geometry.widget_layout.borrow_mut();
-        let mut borrow_content = self.geometry.content_layout.borrow_mut();
+        let mut widget_layout = self.geometry.widget_layout.get();
+        let mut content_layout = self.geometry.content_layout.get();
 
-        borrow_widget.x = target.x;
-        borrow_widget.y = target.y;
+        widget_layout.x = target.x;
+        widget_layout.y = target.y;
 
-        borrow_content.x = target.x + padding.left;
-        borrow_content.y = target.y + padding.top;
+        content_layout.x = target.x + padding.left;
+        content_layout.y = target.y + padding.top;
+
+        self.geometry.widget_layout.set(widget_layout);
+        self.geometry.content_layout.set(content_layout);
     }
 
     pub fn compute_alignment_offset(&self) -> Vector2 {
@@ -261,13 +327,13 @@ impl WidgetData {
 }
 
 impl<N: WidgetDataProvider> UpdatableWidget for N {
-    fn update_with_mouse_information(&mut self, mouse_position: &Vector2, mouse_state: &MouseState) {
-        self.widget_data_mut().update(mouse_position, mouse_state)
+    fn update_with_mouse_information(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
+        self.widget_data().update_hoovered(gui, offset, mouse_position, mouse_state);
+        self.widget_data().update_action(gui,offset,mouse_position,mouse_state);
     }
 }
 
 impl<N: WidgetSpecific + WidgetDataProvider> LayoutableWidget for N {
-
     fn get_computed_size(&self, gui: &Gui) -> Size {
         if self.widget_data().dirty_flag_dirty(DirtyFlags::PREFERRED_SIZE) {
             let size = self.compute_size(gui);
@@ -331,6 +397,21 @@ impl WidgetOp for WidgetData {
     fn set_background_style(&self, background_style_name: &str) -> &dyn WidgetOp {
         self.model.back_style_name.replace(background_style_name.to_string());
         self.invalidate_style();
+        self
+    }
+
+    fn set_action_id(&self, action_id: &str) -> &dyn WidgetOp {
+        self.model.action_id.replace(Some(action_id.to_string()));
+        self
+    }
+
+    fn clear_action_id(&self) -> &dyn WidgetOp {
+        self.model.action_id.replace(None);
+        self
+    }
+
+    fn set_clickable(&self, clickable: bool) -> &dyn WidgetOp {
+        self.model.clickable.set(clickable);
         self
     }
 
@@ -420,6 +501,19 @@ impl<M: WidgetDataProvider> WidgetOp for M {
     fn set_background_style(&self, background_style_name: &str) -> &dyn WidgetOp {
         self.widget_data().set_background_style(background_style_name)
     }
+
+    fn set_action_id(&self, action_id: &str) -> &dyn WidgetOp {
+        self.widget_data().set_action_id(action_id)
+    }
+
+    fn clear_action_id(&self) -> &dyn WidgetOp {
+        self.widget_data().clear_action_id()
+    }
+
+    fn set_clickable(&self,clickable:bool) -> &dyn WidgetOp {
+        self.widget_data().set_clickable(clickable)
+    }
+
 
     fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &dyn WidgetOp {
         self.widget_data().set_position(gui, x, y)

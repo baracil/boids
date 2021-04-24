@@ -13,6 +13,7 @@ pub struct WidgetState {
     pub border: RefCell<Option<Rc<Border>>>,
     pub armed: Cell<bool>,
     pub hoovered: Cell<bool>,
+    pub child_hoovered: Cell<bool>,
 
 }
 
@@ -25,6 +26,7 @@ impl WidgetState {
             border: RefCell::new(None),
             armed: Cell::new(false),
             hoovered: Cell::new(false),
+            child_hoovered: Cell::new(false),
         }
     }
 

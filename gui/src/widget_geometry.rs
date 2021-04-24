@@ -12,26 +12,27 @@ pub struct WidgetGeometry {
     pub widget_size: RefCell<CachedSize>,
 
     /// The position and size of the widget in relative coordinate to the parent
-    pub widget_layout: RefCell<Rectangle>,
+    pub widget_layout: Cell<Rectangle>,
     /// The position and size of the content (same as widget_layout but without padding)
-    pub content_layout: RefCell<Rectangle>,
+    pub content_layout: Cell<Rectangle>,
 
 }
 
 impl WidgetGeometry {
     pub(crate) fn new() -> Self {
         Self {
-            content_layout: RefCell::new(Default::default()),
+            content_layout: Cell::new(Default::default()),
             widget_size: RefCell::new(Default::default()),
-            widget_layout: RefCell::new(Default::default()),
+            widget_layout: Cell::new(Default::default()),
             computed_size: Cell::new(Default::default()),
         }
     }
 
-    pub(crate) fn copy_size(source: &Size, target: &RefCell<Rectangle>) {
-        let mut target_layout = target.borrow_mut();
+    pub(crate) fn copy_size(source: &Size, target: &Cell<Rectangle>) {
+        let mut target_layout = target.get();
         target_layout.width = source.width();
         target_layout.height = source.height();
+        target.set(target_layout);
     }
 
 

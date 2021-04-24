@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use generational_arena::{Index};
+use generational_arena::{Index, Arena};
 use raylib::prelude::*;
 use vec_tree::{ChildrenIter, VecTree};
 
@@ -12,11 +12,18 @@ use crate::size::Size;
 use crate::text_style::TextStyle;
 use crate::widget::Widget;
 use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider};
+use crate::mouse::MouseState;
+use crate::widget_operation::UpdatableWidget;
+use std::sync::atomic::Ordering::AcqRel;
+use crate::event::Event;
+use std::cell::RefCell;
 
 pub struct Gui {
     data: GuiData,
     tree: VecTree<Widget>,
+    events: RefCell<Arena<Event>>,
 }
+
 
 pub struct GuiData {
     fonts: HashMap<String, Rc<FontInfo>>,
@@ -37,6 +44,7 @@ impl Gui {
                 border: HashMap::new(),
             },
             tree,
+            events: RefCell::new(Arena::new())
         };
     }
 }
@@ -90,6 +98,38 @@ impl Gui {
 
 /// layout & rendering
 impl Gui {
+
+    fn clear_events(&self) {
+        let mut borrowed_events = self.events.borrow_mut();
+        borrowed_events.clear();
+    }
+
+    pub fn add_event(&self, event:Event) {
+        let mut borrowed_events = self.events.borrow_mut();
+        borrowed_events.insert(event);
+    }
+
+    pub fn display_events(&self) {
+        let borrowed_events = self.events.borrow();
+
+        borrowed_events.iter().for_each(|e| {println!("Event {:?}",e)})
+    }
+
+
+    pub fn update_states(&self, d: &RaylibDrawHandle<'_>, offset:&Vector2) {
+        self.clear_events();
+        let option_root = self.tree.get_root_index().map(|idx| {self.tree.get(idx).unwrap()});
+        if option_root.is_none() {
+            return;
+        }
+        let mouse_position = d.get_mouse_position();
+        let mouse_state = MouseState::new(d);
+
+        let root = option_root.unwrap();
+
+        root.update_with_mouse_information(self, offset, &mouse_position,&mouse_state)
+    }
+
     pub fn layout(&self, available_size: &Size) {
         let option_root = self.tree.get_root_index();
         if option_root.is_none() {

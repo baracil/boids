@@ -23,6 +23,7 @@ pub mod text_style;
 pub mod fill;
 pub mod background;
 pub mod position;
+pub mod event;
 
 #[cfg(test)]
 mod tests {

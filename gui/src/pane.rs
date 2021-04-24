@@ -5,6 +5,7 @@ use crate::widget_data::{WidgetData};
 use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
 use crate::size::{Size};
 use crate::position::Coordinate::{Absolute};
+use crate::mouse::MouseState;
 
 pub struct PanePar {
     widget_data: WidgetData,
@@ -105,7 +106,7 @@ impl WidgetSpecific for PanePar {
         let tree_index = tree_index.unwrap();
 
         let content_size = {
-            let content_layout = self.widget_data().geometry.content_layout.borrow();
+            let content_layout = self.widget_data().geometry.content_layout.get();
             Size::new(content_layout.width, content_layout.height)
         };
 
@@ -130,7 +131,7 @@ impl RenderableWidget for PanePar {
 
         let padding = self.widget_data.model.padding.get();
         let mut target = offset.clone();
-        let widget_layout = self.widget_data.geometry.widget_layout.borrow();
+        let widget_layout = self.widget_data.geometry.widget_layout.get();
         target.x += widget_layout.x;
         target.y += widget_layout.y;
 

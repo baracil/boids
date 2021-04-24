@@ -7,9 +7,13 @@ pub struct MouseState {
 }
 
 pub struct MouseButtonState {
+    ///the button is pushed
     pub down: bool,
+    /// the button is not pushed
     pub up: bool,
+    ///the button switch from up to down since the last frame
     pub pressed: bool,
+    ///the button switch from down to up since the last frame
     pub released: bool,
 }
 
