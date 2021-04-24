@@ -13,6 +13,7 @@ use gui::pane::PanePar;
 use gui::size::Size;
 use gui::background::Background::Solid;
 use gui::border::Border::Line;
+use gui::position::Coordinate::Relative;
 
 
 fn main() {
@@ -42,9 +43,7 @@ fn main() {
         let par = PanePar::new();
         par.set_preferred_height(&gui, 200.0)
             .set_preferred_width(&gui, 400.0)
-            .set_absolute_coordinate_x(&gui, false)
-            .set_absolute_coordinate_y(&gui, false)
-            .set_position(&gui, 50.0, 50.0)
+            .set_position(&gui, &Relative(50.0),&Relative(50.0))
             .set_valignment(&gui, Center)
             .set_halignment(&gui, Middle);
         gui.insert_root(Pane(par))
@@ -55,10 +54,8 @@ fn main() {
         let par = PanePar::new();
         par.set_preferred_height(&gui, 20.0)
             .set_preferred_width(&gui, 20.0)
-            .set_absolute_coordinate_x(&gui, false)
-            .set_absolute_coordinate_y(&gui, false)
             .set_background_style("red")
-            .set_position(&gui, 50.0, 100.0)
+            .set_position(&gui, &Relative(50.0), &Relative(100.0))
             .set_valignment(&gui, Bottom)
             .set_halignment(&gui, Middle);
         gui.add_child(root_pane, Pane(par))

@@ -5,15 +5,14 @@ use crate::size::Size;
 use crate::fill::Fill::Disabled;
 use raylib::math::{Rectangle, Vector2};
 use crate::alignment::Alignment;
+use crate::position::Position;
 
 pub struct WidgetModel {
 
     pub fill_height: Cell<Fill>,
     pub fill_width: Cell<Fill>,
 
-    pub position: Cell<Vector2>,
-    pub absolute_coordinate_y: Cell<bool>,
-    pub absolute_coordinate_x: Cell<bool>,
+    pub position: Cell<Position>,
 
     pub text_style_name: RefCell<String>,
     pub back_style_name: RefCell<String>,
@@ -38,8 +37,6 @@ impl WidgetModel {
     pub(crate) fn new() -> Self {
         Self {
             position:Cell::new(Default::default()),
-            absolute_coordinate_y: Cell::new(true),
-            absolute_coordinate_x: Cell::new(true),
             fill_height: Cell::new(Disabled),
             fill_width: Cell::new(Disabled),
             preferred_size: Cell::new(Default::default()),

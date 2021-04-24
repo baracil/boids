@@ -42,6 +42,18 @@ impl Size {
         Self{width:self.width.min(other.width),height:self.height.min(other.height)}
     }
 
+    pub fn max_width_mut(&mut self, other:&Size) -> &mut Size {
+        let width = self.width;
+        self.width = width.max(other.width);
+        self
+    }
+
+    pub fn max_height_mut(&mut self, other:&Size) -> &mut Size {
+        let height= self.height;
+        self.height = height.max(other.height);
+        self
+    }
+
     pub fn max_mut(&mut self, other:&Size) -> &mut Size {
         let width = self.width;
         let height= self.height;

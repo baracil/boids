@@ -2,9 +2,11 @@ use raylib::prelude::*;
 
 use crate::gui::{Gui};
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, SizeComputer, WidgetOp};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific, WidgetOp};
 use crate::size::{Size};
 use crate::fill::Fill::Enabled;
+use crate::position::Coordinate;
+use crate::position::Coordinate::{Relative, Absolute};
 
 pub struct PanePar {
     widget_data: WidgetData,
@@ -17,7 +19,7 @@ impl PanePar {
     }
 }
 
-impl SizeComputer for PanePar {
+impl WidgetSpecific for PanePar {
     fn compute_size(&self, gui: &Gui) -> Size {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
@@ -25,47 +27,55 @@ impl SizeComputer for PanePar {
         }
         let tree_index = tree_index.unwrap();
 
-        let mut xmin:f32 = 0.0;
-        let mut xmax:f32 = 0.0;
-        let mut ymin:f32 = 0.0;
-        let mut ymax:f32 = 0.0;
+        let mut xmin: f32 = 0.0;
+        let mut xmax: f32 = 0.0;
+        let mut ymin: f32 = 0.0;
+        let mut ymax: f32 = 0.0;
         let mut max_size = Size::empty();
-        let mut first = true;
+        let mut first_x = true;
+        let mut first_y = true;
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
                 let preferred = w.get_computed_size(gui);
                 let target = w.widget_data().model.position.get();
-                if w.widget_data().is_fill_width_or_relative_x() {
-                    if first {
-                        max_size.set_height(preferred.height());
-                        max_size.set_width(preferred.width());
-                    } else {
-                        max_size.max_mut(&preferred);
+
+                match (target.get_x(), w.widget_data().is_fill_width(), first_x) {
+                    (Absolute(value), false, true) => {
+                        xmin = *value;
+                        xmax = *value + preferred.width();
+                        first_x = false
                     }
-                } else {
-                    if first {
-                        xmin = target.x;
-                        xmax = target.x + preferred.width();
-                        ymin = target.y;
-                        ymax = target.y + preferred.height();
-                    } else {
-                        xmin = xmin.min(target.x);
-                        xmax = xmax.max(target.x + preferred.width());
-                        ymin = ymin.min(target.y);
-                        ymax = ymax.max(target.y + preferred.height());
+                    (Absolute(value), false, false) => {
+                        xmin = xmin.min(*value);
+                        xmax = xmax.max(*value + preferred.width());
+                    }
+                    (_, _, _) => {
+                        max_size.max_width_mut(&preferred);
                     }
                 }
-                first = false
+
+                match (target.get_y(), w.widget_data().is_fill_height(), first_y) {
+                    (Absolute(value), false, true) => {
+                        ymin = *value;
+                        ymax = *value + preferred.height();
+                        first_y = false
+                    }
+                    (Absolute(value), false, false) => {
+                        ymin = ymin.min(*value);
+                        ymax = ymax.max(*value + preferred.height());
+                    }
+                    (_, _, _) => {
+                        max_size.max_height_mut(&preferred);
+                    }
+                }
             }
         }
 
-        let pref_width = (xmax-xmin).max(max_size.width());
-        let pref_height = (ymax-ymin).max(max_size.height());
+        let pref_width = (xmax - xmin).max(max_size.width());
+        let pref_height = (ymax - ymin).max(max_size.height());
 
-        let children_size = Size::new(pref_width,pref_height).with_padding(&self.widget_data.model.padding.get());
-
-
+        let children_size = Size::new(pref_width, pref_height).with_padding(&self.widget_data.model.padding.get());
 
         let mut user_preferred_size = self.widget_data.model.preferred_size.get();
 
@@ -98,7 +108,7 @@ impl SizeComputer for PanePar {
 
         let content_size = {
             let content_layout = self.widget_data().geometry.content_layout.borrow();
-            Size::new(content_layout.width,content_layout.height)
+            Size::new(content_layout.width, content_layout.height)
         };
 
         let mut target = Vector2::default();
@@ -111,12 +121,11 @@ impl SizeComputer for PanePar {
                 w.update_child_positions(gui)
             }
         }
-
     }
 }
 
 impl RenderableWidget for PanePar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2, available_space:&Size) {
+    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2, available_space: &Size) {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
             return;
@@ -125,19 +134,18 @@ impl RenderableWidget for PanePar {
 
         let mut target = offset.clone();
         let widget_layout = self.widget_data.geometry.widget_layout.borrow();
-        target.x+= widget_layout.x;
-        target.y+= widget_layout.y;
+        target.x += widget_layout.x;
+        target.y += widget_layout.y;
 
 
-        self.widget_data.render_background_and_border(d,&offset);
+        self.widget_data.render_background_and_border(d, &offset);
 
         let widget_size = self.widget_data.geometry.widget_size.borrow().size().clone();
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
-                w.render(gui,d,&target,&widget_size)
+                w.render(gui, d, &target, &widget_size)
             }
         }
-
     }
 }
 

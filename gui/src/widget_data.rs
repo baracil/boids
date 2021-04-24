@@ -7,7 +7,7 @@ use std::borrow::BorrowMut;
 use generational_arena::Index;
 use raylib::prelude::*;
 use vec_tree::VecTree;
-
+use std::ops::Add;
 use crate::alignment::{HAlignment, VAlignment};
 use crate::fill::Fill;
 use crate::fill::Fill::{Disabled, Enabled};
@@ -19,10 +19,11 @@ use crate::text_style::TextStyle;
 use crate::widget::Widget;
 use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
-use crate::widget_operation::{DirtyFlags, UpdatableWidget, WidgetOp, LayoutableWidget, SizeComputer, WidgetDataProvider};
+use crate::widget_operation::{DirtyFlags, UpdatableWidget, WidgetOp, LayoutableWidget, WidgetSpecific, WidgetDataProvider};
 use crate::widget_state::WidgetState;
 use crate::background::BackgroundRenderer;
 use crate::border::BorderRenderer;
+use crate::position::Coordinate;
 
 pub struct WidgetData {
     pub tree_index: Option<Index>,
@@ -82,11 +83,11 @@ impl WidgetData {
     }
 
     pub fn is_relative_coordinate_y(&self)->bool {
-        !self.model.absolute_coordinate_y.get()
+        self.model.position.get().is_y_relative()
     }
 
     pub fn is_relative_coordinate_x(&self)->bool {
-        !self.model.absolute_coordinate_x.get()
+        self.model.position.get().is_x_relative()
     }
 
 
@@ -163,11 +164,11 @@ impl WidgetData {
         todo!()
     }
 
-    pub fn is_fill_height_or_relative_y(&self) -> bool {
-        self.model.fill_height.get().is_enabled() || !self.model.absolute_coordinate_y.get()
+    pub fn is_fill_height(&self) -> bool {
+        self.model.fill_height.get().is_enabled()
     }
-    pub fn is_fill_width_or_relative_x(&self) -> bool {
-        self.model.fill_width.get().is_enabled() || !self.model.absolute_coordinate_x.get()
+    pub fn is_fill_width(&self) -> bool {
+        self.model.fill_width.get().is_enabled()
     }
 }
 
@@ -267,13 +268,10 @@ impl WidgetData {
     }
 
     pub(crate) fn compute_default_target(&self, available_size:&Size) {
-        let position = self.model.position.get();
-        let mut offset = self.compute_alignment_offset();
+        let position = self.model.position.get().compute_absolute(available_size);
+        let offset = self.compute_alignment_offset();
 
-        offset.x += WidgetData::compute_target(position.x,self.model.absolute_coordinate_x.get(), available_size.width());
-        offset.y += WidgetData::compute_target(position.y,self.model.absolute_coordinate_y.get(), available_size.height());
-
-        self.set_widget_target(&offset);
+        self.set_widget_target(&position.add(offset));
     }
 
     pub fn set_widget_target(&self, target:&Vector2) {
@@ -308,8 +306,7 @@ impl<N: WidgetDataProvider> UpdatableWidget for N {
     }
 }
 
-
-impl<N: SizeComputer + WidgetDataProvider> LayoutableWidget for N {
+impl<N: WidgetSpecific + WidgetDataProvider> LayoutableWidget for N {
 
     fn get_computed_size(&self, gui: &Gui) -> Size {
         if self.widget_data().dirty_flag_dirty(DirtyFlags::PREFERRED_SIZE) {
@@ -378,24 +375,13 @@ impl WidgetOp for WidgetData {
     }
 
 
-    fn set_absolute_coordinate_y(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
-        self.set_absolute(gui, &self.model.absolute_coordinate_y, absolute);
-        self
-    }
-
-    fn set_absolute_coordinate_x(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
-        self.set_absolute(gui, &self.model.absolute_coordinate_x, absolute);
-        self
-    }
-
-
-    fn set_position(&self, gui: &Gui, x: f32, y: f32) -> &dyn WidgetOp {
+    fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &dyn WidgetOp {
         let mut current_position = self.model.position.get();
-        if current_position.x.eq(&x) && current_position.y.eq(&y) {
+        if current_position.get_x().eq(&x) && current_position.get_y().eq(&y) {
             return self;
         }
-        current_position.x = x;
-        current_position.y = y;
+        current_position.set_x(x);
+        current_position.set_y(y);
         self.model.position.set(current_position);
         self.invalidate_position(gui);
         self
@@ -475,15 +461,7 @@ impl<M: WidgetDataProvider> WidgetOp for M {
         self.widget_data().set_background_style(background_style_name)
     }
 
-    fn set_absolute_coordinate_y(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
-        self.widget_data().set_absolute_coordinate_y(gui, absolute)
-    }
-
-    fn set_absolute_coordinate_x(&self, gui: &Gui, absolute: bool) -> &dyn WidgetOp {
-        self.widget_data().set_absolute_coordinate_x(gui, absolute)
-    }
-
-    fn set_position(&self, gui: &Gui, x: f32, y: f32) -> &dyn WidgetOp {
+    fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &dyn WidgetOp {
         self.widget_data().set_position(gui, x, y)
     }
 

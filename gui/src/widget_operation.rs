@@ -7,6 +7,7 @@ use crate::mouse::MouseState;
 use crate::padding::Padding;
 use crate::size::Size;
 use crate::widget_data::WidgetData;
+use crate::position::{Coordinate, Position};
 
 bitflags! {
     pub struct DirtyFlags: u32 {
@@ -25,22 +26,20 @@ pub trait WidgetOp {
     fn set_background_style(&self, background_style_name:&str) -> &dyn WidgetOp;
 
     /// set the position of this node
-    fn set_position_vec(&self,gui:&Gui, point: &Vector2, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
-        self.set_position(gui,point.x,point.y);
+    fn set_position_vec(&self,gui:&Gui, point: &Position, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
+        self.set_position(gui,point.get_x(),point.get_y());
         self.set_valignment(gui,valignment);
         self.set_halignment(gui,halignment)
     }
 
-    fn set_position_ex(&self,gui:&Gui, x: f32, y:f32, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
+    fn set_position_ex(&self,gui:&Gui, x: &Coordinate, y: &Coordinate, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
         self.set_position(gui,x,y);
         self.set_valignment(gui,valignment);
         self.set_halignment(gui,halignment)
     }
 
-    fn set_absolute_coordinate_y(&self,gui:&Gui,absolute:bool)  -> &dyn WidgetOp ;
-    fn set_absolute_coordinate_x(&self,gui:&Gui,absolute:bool)  -> &dyn WidgetOp ;
+    fn set_position(&self,gui:&Gui, x: &Coordinate, y: &Coordinate)  -> &dyn WidgetOp;
 
-    fn set_position(&self,gui:&Gui, x: f32, y:f32)  -> &dyn WidgetOp;
     fn set_valignment(&self,gui:&Gui, valignment: VAlignment)  -> &dyn WidgetOp;
     fn set_halignment(&self,gui:&Gui, halignment: HAlignment)  -> &dyn WidgetOp;
 
@@ -62,7 +61,7 @@ pub trait WidgetOp {
 
 }
 
-pub trait SizeComputer {
+pub trait WidgetSpecific {
     fn compute_size(&self, gui:&Gui) -> Size;
     fn compute_child_content_size(&self, gui:&Gui, available_size:Size);
     fn compute_child_positions(&self, gui:&Gui);

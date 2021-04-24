@@ -6,7 +6,7 @@ use std::ops::Deref;
 use crate::widget_data::{WidgetData};
 
 
-use crate::widget_operation::{RenderableWidget, DirtyFlags, WidgetOp, LayoutableWidget, SizeComputer, WidgetDataProvider};
+use crate::widget_operation::{RenderableWidget, DirtyFlags, WidgetOp, LayoutableWidget, WidgetSpecific, WidgetDataProvider};
 use crate::gui::{Gui};
 use crate::size::{Size};
 use crate::fill::Fill::Enabled;
@@ -75,7 +75,7 @@ impl LabelPar {
 }
 
 
-impl SizeComputer for LabelPar {
+impl WidgetSpecific for LabelPar {
     fn compute_size(&self, gui: &Gui) -> Size {
         let padding = self.widget_data.model.padding.get();
         let text_size = self.measure_text().with_padding(&padding);

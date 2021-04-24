@@ -1,5 +1,5 @@
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, SizeComputer, WidgetOp};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific, WidgetOp};
 use crate::gui::{Gui};
 use raylib::core::drawing::RaylibDrawHandle;
 use crate::size::{Size};
@@ -45,7 +45,7 @@ impl WidgetDataProvider for VBoxPar {
     }
 }
 
-impl SizeComputer for VBoxPar {
+impl WidgetSpecific for VBoxPar {
     fn compute_size(&self, gui: &Gui) -> Size {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
