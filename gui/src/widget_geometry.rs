@@ -20,14 +20,11 @@ pub struct WidgetGeometry {
     /// The position and size of the content (same as widget_layout but without padding)
     pub content_layout: RefCell<Rectangle>,
 
-    /// the requested position where the node should be drawn
-    pub target2: Cell<Vector2>,
 }
 
 impl WidgetGeometry {
     pub(crate) fn new() -> Self {
         Self {
-            target2: Cell::new(Default::default()),
             content_layout: RefCell::new(Default::default()),
             widget_size: RefCell::new(Default::default()),
             widget_layout: RefCell::new(Default::default()),
