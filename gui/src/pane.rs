@@ -2,11 +2,9 @@ use raylib::prelude::*;
 
 use crate::gui::{Gui};
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific, WidgetOp};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
 use crate::size::{Size};
-use crate::fill::Fill::Enabled;
-use crate::position::Coordinate;
-use crate::position::Coordinate::{Relative, Absolute};
+use crate::position::Coordinate::{Absolute};
 
 pub struct PanePar {
     widget_data: WidgetData,
@@ -111,8 +109,6 @@ impl WidgetSpecific for PanePar {
             Size::new(content_layout.width, content_layout.height)
         };
 
-        let mut target = Vector2::default();
-
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
                 let child_widget_data = w.widget_data();
@@ -125,7 +121,7 @@ impl WidgetSpecific for PanePar {
 }
 
 impl RenderableWidget for PanePar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2, available_space: &Size) {
+    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
             return;
@@ -140,10 +136,9 @@ impl RenderableWidget for PanePar {
 
         self.widget_data.render_background_and_border(d, &offset);
 
-        let widget_size = self.widget_data.geometry.widget_size.borrow().size().clone();
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
-                w.render(gui, d, &target, &widget_size)
+                w.render(gui, d, &target)
             }
         }
     }

@@ -63,11 +63,11 @@ impl WidgetDataProvider for Widget {
 }
 
 impl RenderableWidget for Widget {
-    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, offset:&Vector2, available_space:&Size) {
+    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, offset:&Vector2) {
         match self {
-            Widget::Label(p) => p.render(gui, d, offset,available_space),
-            Widget::Pane(p) => p.render(gui, d, offset,available_space),
-            Widget::VBox(p) => p.render(gui, d, offset,available_space),
+            Widget::Label(p) => p.render(gui, d, offset),
+            Widget::Pane(p) => p.render(gui, d, offset),
+            Widget::VBox(p) => p.render(gui, d, offset),
         }
     }
 }

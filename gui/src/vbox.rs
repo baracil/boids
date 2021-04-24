@@ -1,15 +1,11 @@
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific, WidgetOp};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
 use crate::gui::{Gui};
 use raylib::core::drawing::RaylibDrawHandle;
 use crate::size::{Size};
 use raylib::math::Vector2;
 use std::cell::Cell;
-use std::ops::Deref;
 use crate::fill::Fill;
-use crate::fill::Fill::Enabled;
-use crate::alignment::HAlignment::Left;
-use crate::alignment::VAlignment::Top;
 
 pub struct VBoxPar {
     widget_data: WidgetData,
@@ -83,15 +79,12 @@ impl WidgetSpecific for VBoxPar {
         }
         let tree_index = tree_index.unwrap();
 
-        let mut nb_children:u32 = 0;
-        let mut nb_filled:u32 = 0;
         let mut nb_fixed:u32 = 0;
         let mut summed_fixed_height:f32 = 0.0;
         let mut summed_weight:u32 = 0;
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(child) = gui.get_widget(child_index) {
-                nb_children+=1;
                 let fill = child.widget_data().fill_height();
                 match fill {
                     Fill::Disabled => {
@@ -100,18 +93,17 @@ impl WidgetSpecific for VBoxPar {
                     }
                     Fill::Enabled { weight} => {
                         summed_weight += weight;
-                        nb_filled += 1;
                     }
                 }
             }
         }
 
         let padding = self.widget_data.model.padding.get();
-        let mut width = available_size.width() - padding.h_padding();
-        let mut height= available_size.height() - padding.v_padding();
+        let width = available_size.width() - padding.h_padding();
+        let height= available_size.height() - padding.v_padding();
 
         let fix_height = summed_fixed_height/(nb_fixed.max(1) as f32);
-        let fill_height = (height-summed_fixed_height)/(nb_filled.max(1) as f32);
+        let fill_height = (height-summed_fixed_height)/(summed_weight.max(1) as f32);
 
         if width<0.0 || height<=0.0 {
             return
@@ -151,7 +143,6 @@ impl WidgetSpecific for VBoxPar {
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
-                let widget_size = w.widget_data().geometry.widget_size.borrow();
 
                 w.widget_data().set_widget_target(&position);
                 w.update_child_positions(gui);
@@ -163,7 +154,7 @@ impl WidgetSpecific for VBoxPar {
 }
 
 impl RenderableWidget for VBoxPar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2, available_space:&Size) {
+    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
             return;
@@ -181,9 +172,7 @@ impl RenderableWidget for VBoxPar {
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
-                let borrowed_size = w.widget_data().geometry.widget_size.borrow();
-                let widget_size = borrowed_size.size();
-                w.render(gui,d,&inner_offset, widget_size);
+                w.render(gui,d,&inner_offset);
             }
         }
 

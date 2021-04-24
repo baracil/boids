@@ -18,7 +18,7 @@ impl BorderRenderer for Border {
     fn draw(&self, d: &mut RaylibDrawHandle<'_>, layout: &Rectangle) {
         match self {
             Border::Empty => {}
-            Border::Line {color, thickness:thickness } => render_line_border(d, layout, color, *thickness)
+            Border::Line {color, thickness } => render_line_border(d, layout, color, *thickness)
         }
     }
 }

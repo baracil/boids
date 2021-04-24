@@ -1,11 +1,7 @@
-use raylib::math::{Rectangle, Vector2};
+use raylib::math::{Rectangle};
 
-use crate::alignment::Alignment;
 use std::cell::{Cell, RefCell};
 use crate::size::{Size, CachedSize};
-use crate::fill::Fill;
-use crate::fill::Fill::Disabled;
-use crate::gui::Gui;
 
 /// Geometry of the widget obtained from the information contained in the model
 pub struct WidgetGeometry {

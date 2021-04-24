@@ -25,9 +25,6 @@ pub struct GuiData {
     border: HashMap<String, Rc<Border>>,
 }
 
-pub struct Node {
-    index:Index
-}
 
 impl Gui {
     pub fn new() -> Gui {
@@ -129,10 +126,10 @@ impl Gui {
         root.widget_data().compute_default_target(available_space);
         root.update_child_positions(&self);
     }
-    pub fn render(&self, d: &mut RaylibDrawHandle<'_>, position: &Vector2, available_space: &Size) {
+    pub fn render(&self, d: &mut RaylibDrawHandle<'_>, position: &Vector2) {
         if let Some(idx) = self.tree.get_root_index() {
             let root = self.tree.get(idx).unwrap();
-            root.render(&self, d, position, available_space)
+            root.render(&self, d, position)
         }
     }
 }

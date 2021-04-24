@@ -80,7 +80,7 @@ pub trait UpdatableWidget {
 
 pub trait RenderableWidget {
     /// draw the node
-    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, offset:&Vector2, available_size:&Size);
+    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, offset:&Vector2);
 }
 
 pub trait WidgetDataProvider {

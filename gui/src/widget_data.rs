@@ -1,21 +1,17 @@
 use std::cell::Cell;
 use std::ops::BitAnd;
 use std::ops::Deref;
-use std::rc::Rc;
-use std::borrow::BorrowMut;
 
 use generational_arena::Index;
 use raylib::prelude::*;
-use vec_tree::VecTree;
 use std::ops::Add;
 use crate::alignment::{HAlignment, VAlignment};
 use crate::fill::Fill;
 use crate::fill::Fill::{Disabled, Enabled};
-use crate::gui::{Gui, GuiData};
+use crate::gui::{Gui};
 use crate::mouse::MouseState;
 use crate::padding::Padding;
 use crate::size::Size;
-use crate::text_style::TextStyle;
 use crate::widget::Widget;
 use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
@@ -39,7 +35,7 @@ impl WidgetData {
         chrome_layout.x += offset.x;
         chrome_layout.y += offset.y;
         {
-            let mut borrowed_background = self.state.background.borrow();
+            let borrowed_background = self.state.background.borrow();
             if let Some(background) = borrowed_background.as_deref() {
                 background.draw(d, &chrome_layout)
             }
@@ -54,17 +50,6 @@ impl WidgetData {
 }
 
 impl WidgetData {
-    pub(crate) fn get_height_weight(&self) -> u32 {
-        self.model.fill_height.get().get_weight()
-    }
-
-    pub(crate) fn get_width_weight(&self) -> u32 {
-        self.model.fill_height.get().get_weight()
-    }
-
-    fn get_computed_size(&self) -> Size {
-        self.geometry.computed_size.get()
-    }
 
     fn get_parent<'a>(&self, gui: &'a Gui) -> Option<&'a Widget> {
         match self.tree_index {
@@ -148,22 +133,6 @@ impl WidgetData {
         self.state.border.replace(border);
     }
 
-    pub fn update_my_position(&self,available_space:&Size) {
-        // let target = self.compute_target(available_space);
-        // {
-        //     let mut widget_layout = self.geometry.widget_layout.borrow_mut();
-        //     widget_layout.x = target.x;
-        //     widget_layout.y = target.y;
-        // }
-        // {
-        //     let padding = self.model.padding.get();
-        //     let mut content_layout = self.geometry.content_layout.borrow_mut();
-        //     content_layout.x = target.x+padding.left;
-        //     content_layout.y = target.y+padding.top;
-        // }
-        todo!()
-    }
-
     pub fn is_fill_height(&self) -> bool {
         self.model.fill_height.get().is_enabled()
     }
@@ -224,15 +193,6 @@ impl WidgetData {
         }
 
         fill_cell.set(fill);
-        self.invalidate_preferred_size(gui)
-    }
-
-    fn set_absolute(&self, gui: &Gui, absolute_cell: &Cell<bool>, absolute: bool) {
-        let current = absolute_cell.get();
-        if current == absolute {
-            return;
-        }
-        absolute_cell.set(absolute);
         self.invalidate_preferred_size(gui)
     }
 

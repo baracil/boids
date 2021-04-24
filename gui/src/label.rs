@@ -1,4 +1,4 @@
-use std::cell::{RefCell, Ref};
+use std::cell::{RefCell};
 
 use raylib::prelude::*;
 use std::ops::Deref;
@@ -6,12 +6,9 @@ use std::ops::Deref;
 use crate::widget_data::{WidgetData};
 
 
-use crate::widget_operation::{RenderableWidget, DirtyFlags, WidgetOp, LayoutableWidget, WidgetSpecific, WidgetDataProvider};
+use crate::widget_operation::{RenderableWidget, WidgetSpecific, WidgetDataProvider};
 use crate::gui::{Gui};
 use crate::size::{Size};
-use crate::fill::Fill::Enabled;
-use crate::background::BackgroundRenderer;
-use crate::border::BorderRenderer;
 
 pub struct LabelPar {
     widget_data: WidgetData,
@@ -76,7 +73,7 @@ impl LabelPar {
 
 
 impl WidgetSpecific for LabelPar {
-    fn compute_size(&self, gui: &Gui) -> Size {
+    fn compute_size(&self, _gui: &Gui) -> Size {
         let padding = self.widget_data.model.padding.get();
         let text_size = self.measure_text().with_padding(&padding);
 
@@ -86,14 +83,14 @@ impl WidgetSpecific for LabelPar {
         preferred
     }
 
-    fn compute_child_content_size(&self, gui: &Gui, available_space: Size) {}
+    fn compute_child_content_size(&self, _gui: &Gui, _available_space: Size) {}
 
-    fn compute_child_positions(&self, gui: &Gui) {
+    fn compute_child_positions(&self, _gui: &Gui) {
     }
 }
 
 impl RenderableWidget for LabelPar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2, available_space: &Size) {
+    fn render(&self, _gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
 
 
         self.widget_data.render_background_and_border(d,&offset);

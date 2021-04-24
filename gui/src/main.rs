@@ -50,7 +50,7 @@ fn main() {
     };
 
 
-    let child_pane = {
+    let _child_pane = {
         let par = PanePar::new();
         par.set_preferred_height(&gui, 20.0)
             .set_preferred_width(&gui, 20.0)
@@ -77,7 +77,7 @@ fn main() {
         gui.layout(&screen_size);
         d.clear_background(Color::WHITE);
 
-        gui.render(&mut d, &offset, &screen_size);
+        gui.render(&mut d, &offset);
 
     }
 }
