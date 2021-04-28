@@ -1,4 +1,4 @@
-use std::cell::{RefCell};
+use std::cell::{RefCell, Cell};
 
 use raylib::prelude::*;
 use std::ops::Deref;
@@ -14,6 +14,7 @@ use crate::mouse::MouseState;
 pub struct LabelPar {
     widget_data: WidgetData,
     text: RefCell<Option<String>>,
+    text_size: Cell<Size>
 }
 
 
@@ -31,6 +32,7 @@ impl LabelPar {
         Self {
             widget_data: WidgetData::new(),
             text: RefCell::new(None),
+            text_size: Cell::new(Size::empty())
         }
     }
 
@@ -76,11 +78,15 @@ impl LabelPar {
 impl WidgetSpecific for LabelPar {
     fn compute_size(&self, _gui: &Gui) -> Size {
         let padding = self.widget_data.model.padding.get();
-        let text_size = self.measure_text().with_padding(&padding);
+        let text_size = self.measure_text();
+
+        self.text_size.set(text_size);
+
+        let text_size_with_padding = text_size.with_padding(&padding).width_border(3.0);
 
         let mut preferred = self.widget_data.model.preferred_size.get();
 
-        preferred.replace_empty_dimensions_and_max(&text_size);
+        preferred.replace_empty_dimensions_and_max(&text_size_with_padding);
         preferred
     }
 
@@ -97,13 +103,13 @@ impl RenderableWidget for LabelPar {
         self.widget_data.render_background_and_border(d,&offset);
 
 
+
         if let Some(text) = self.text.borrow().as_ref() {
-            let padding = self.widget_data.model.padding.get();
-            let content_layout = self.widget_data.geometry.content_layout.get();
-            let computed_size = self.widget_data.geometry.computed_size.get();
+            let mut content_layout = self.widget_data.geometry.content_layout.get();
+            let text_size = self.text_size.get();
             let position = Vector2 {
-                x: content_layout.x + offset.x + (content_layout.width - computed_size.width() + padding.h_padding())*0.5,
-                y: content_layout.y + offset.y + (content_layout.height - computed_size.height() + padding.v_padding())*0.5,
+                x: content_layout.x + offset.x + (content_layout.width - text_size.width())*0.5,
+                y: content_layout.y + offset.y + (content_layout.height - text_size.height())*0.5,
             };
 
             let borrowed_text_style = self.widget_data.state.text_style.borrow();

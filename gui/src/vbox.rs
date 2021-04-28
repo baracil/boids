@@ -169,11 +169,10 @@ impl RenderableWidget for VBoxPar {
 
         self.widget_data.render_background_and_border(d, &offset);
 
-        let padding = self.widget_data.model.padding.get();
+        let content_layout = self.widget_data.geometry.content_layout.get();
         let mut target = offset.clone();
-        let widget_layout = self.widget_data.geometry.widget_layout.get();
-        target.x += widget_layout.x + padding.left;
-        target.y += widget_layout.y + padding.top;
+        target.x += content_layout.x;
+        target.y += content_layout.y;
 
 
         for child_index in gui.get_widget_children(tree_index) {

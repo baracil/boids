@@ -30,7 +30,7 @@ fn main() {
         .vsync()
         .resizable()
         .msaa_4x()
-        .title("Hello, World")
+        .title("Gui Test")
         .build();
 
     let mut gui = Gui::new();
@@ -50,7 +50,7 @@ fn main() {
     let root_pane = {
         let par = PanePar::new();
         par.set_preferred_height(&gui, 200.0)
-            .set_preferred_width(&gui, 400.0)
+            .set_preferred_width(&gui, 600.0)
             .set_padding(&gui,Padding::same(10.0))
             .set_position(&gui, &Absolute(0.0),&Absolute(0.0))
             .set_valignment(&gui, Top)
@@ -65,8 +65,8 @@ fn main() {
         let par = VBoxPar::new();
         par.set_spacing(&gui,20.0)
             .set_position(&gui,&Relative(50.0), &Relative(50.0))
-            .set_halignment(&gui, Middle)
-            .set_valignment(&gui,Center)
+            .set_halignment(&gui, Left)
+            .set_valignment(&gui,Top)
             .set_padding(&gui, Padding::same(10.0))
             .set_background_style("yellow");
         gui.add_child(root_pane,VBox(par))
@@ -147,14 +147,14 @@ fn main() {
             par.set_text(&gui, "Long label with several words")
                 .set_action_id("Label2 b")
                 .set_clickable(true)
-                .set_padding(&gui, Padding::new(0.0, 5.0, 0.0, 5.0));
+                .set_padding(&gui, Padding::new(0.0, 0.0, 0.0, 15.0));
             gui.add_child(_vbox2, Label(par))
         };
 
         let _label3 = {
             let par = LabelPar::new();
             par.set_text(&gui, "3")
-                .set_padding(&gui, Padding::new(0.0, 5.0, 0.0, 5.0))
+                .set_padding(&gui, Padding::new(0.0, 15.0, 0.0, 0.0))
                 .set_action_id("Label3 b")
                 .set_clickable(true)
                 .enable_fill_width(&gui, Enabled { weight: 1 })

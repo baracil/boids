@@ -5,7 +5,7 @@ use crate::size::{Size, CachedSize};
 
 /// Geometry of the widget obtained from the information contained in the model
 pub struct WidgetGeometry {
-    /// Computed size of the widget based on content, preferred size and available space
+    /// Computed size of the widget based on content and preferred size (padding is included)
     pub computed_size: Cell<Size>,
 
     /// Size of the content base on the available space provided

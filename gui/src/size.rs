@@ -120,6 +120,10 @@ impl Size {
         return Size::new(width,height)
     }
 
+    pub fn width_border(&self, border:f32) -> Size {
+        Size::new(self.width+2.0*border, self.height+2.0*border)
+    }
+
     pub fn set_width(&mut self, width:f32) {
         self.width = width;
     }
