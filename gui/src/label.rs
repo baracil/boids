@@ -125,4 +125,5 @@ impl RenderableWidget for LabelPar {
             d.draw_rectangle_lines_ex(content_layout,1,Color::GREEN)
         }
     }
+
 }

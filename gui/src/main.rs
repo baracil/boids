@@ -8,7 +8,7 @@ use gui::widget_operation::{WidgetOp, WidgetDataProvider};
 use gui::alignment::VAlignment::{Top, Center};
 use gui::alignment::HAlignment::{Left, Middle};
 
-use gui::widget::Widget::{Pane, VBox, Label, HBox};
+use gui::widget::Widget::{Pane, VBox, Label, HBox, Slider};
 use gui::pane::PanePar;
 use gui::size::Size;
 use gui::background::Background::Solid;
@@ -19,7 +19,9 @@ use gui::label::LabelPar;
 use gui::padding::Padding;
 use gui::fill::Fill::Enabled;
 use gui::hbox::HBoxPar;
-
+use gui::slider::SliderPar;
+use std::f32::consts::PI;
+use std::borrow::BorrowMut;
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -38,7 +40,15 @@ fn main() {
                   200,
     ).expect("Could not load the font");
 
+    gui.load_font(&mut rl, &thread,
+                  "small",
+                  "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf",
+                  24,
+                  200,
+    ).expect("Could not load the font");
+
     gui.add_text_style("default", "default", Color::BLACK, 0.0);
+    gui.add_text_style("small", "small", Color::BLACK, 0.0);
     gui.add_border("default", Line { color: Color::BLACK, thickness: 2.0 });
     gui.add_background("default", Solid { idle_color: Color::DARKBLUE, hoovered_color: Color::SKYBLUE, armed_color: Color::BLUE });
     gui.add_background("red", Solid { idle_color: Color::RED, hoovered_color: Color::ORANGE, armed_color: Color::LIME });
@@ -71,9 +81,9 @@ fn main() {
 
 
     let padding = Padding::same(15.0);
-    let label_padding = Padding::same(15.0);
+    let label_padding = Padding::same(0.0);
 
-    let _hbox1 = {
+    let (_hbox1,_slider) = {
         let _hbox1 = {
             let par = HBoxPar::new();
             par.set_spacing(&gui, 10.0)
@@ -86,14 +96,17 @@ fn main() {
             gui.add_child(_vbox, HBox(par))
         };
 
-        let _label1 = {
-            let par = LabelPar::new();
-            par.set_text(&gui, "Label 1")
-                .set_action_id("Label1")
-                .set_clickable(true)
+        let _slider = {
+            let par = SliderPar::new();
+            par.set_value(&gui,50.0)
+                .set_value_max(&gui,100.0)
+                .set_value_min(&gui,0.0)
                 .set_padding(&gui, label_padding)
+                .set_background_style("none")
+                .set_border_style("none")
+                .set_text_style("small")
             ;
-            gui.add_child(_hbox1, Label(par))
+            gui.add_child(_hbox1, Slider(par))
         };
 
         let _label2 = {
@@ -117,7 +130,7 @@ fn main() {
 
             gui.add_child(_hbox1, Label(par))
         };
-        _hbox1
+        (_hbox1,_slider)
     };
 
     let _vbox2 = {
@@ -172,26 +185,39 @@ fn main() {
 
     let offset = Vector2 { x: 0.0, y: 0.0 };
 
-    let vbox = gui.get_widget(_vbox).unwrap();
+    let vbox = gui.get_widget(_slider).unwrap();
+
+    let mut camera = Camera2D::default();
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
 
         if d.is_window_resized() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
+            camera.offset.x = screen_size.width()*0.5;
+            camera.offset.y = screen_size.height()*0.5;
+            camera.target.x = screen_size.width()*0.5;
+            camera.target.y = screen_size.height()*0.5;
+            camera.zoom = 1.0;
         }
 
-        let time = d.get_time() as f32;
+        {
+            let mut d = d.begin_mode2D(camera);
+            {
+                let time = d.get_time() as f32;
+                if let Slider(p) = vbox {
+                    let value = (time * 0.2 * PI).cos() * 50.0 + 50.;
+                    p.set_value(&gui, value);
+                }
 
-//        vbox.widget_data().set_position(&gui,&Absolute(time*20.), &Absolute(time*20.));
+                gui.update_states(&d, &offset);
+                gui.layout(&screen_size);
 
+                d.clear_background(Color::WHITE);
 
-        gui.update_states(&d, &offset);
-        gui.layout(&screen_size);
-
-        d.clear_background(Color::WHITE);
-
-        gui.render(&mut d, &offset);
+            }
+            gui.render(&mut d, &offset);
+        }
 
         gui.display_events();
     }

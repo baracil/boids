@@ -24,6 +24,7 @@ pub trait WidgetOp {
 
     fn set_text_style(&self, text_style_name:&str) -> &dyn WidgetOp;
     fn set_background_style(&self, background_style_name:&str) -> &dyn WidgetOp;
+    fn set_border_style(&self, background_style_name:&str) -> &dyn WidgetOp;
 
     fn set_action_id(&self, action_id:&str) -> &dyn WidgetOp;
     fn clear_action_id(&self) -> &dyn WidgetOp;

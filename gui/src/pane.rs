@@ -121,6 +121,7 @@ impl WidgetSpecific for PanePar {
 }
 
 impl RenderableWidget for PanePar {
+
     fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
@@ -141,6 +142,7 @@ impl RenderableWidget for PanePar {
             }
         }
     }
+
 }
 
 

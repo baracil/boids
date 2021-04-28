@@ -399,6 +399,12 @@ impl WidgetOp for WidgetData {
         self
     }
 
+    fn set_border_style(&self, border_style: &str) -> &dyn WidgetOp {
+        self.model.border_style_name.replace(border_style.to_string());
+        self.invalidate_style();
+        self
+    }
+
     fn set_action_id(&self, action_id: &str) -> &dyn WidgetOp {
         self.model.action_id.replace(Some(action_id.to_string()));
         self
@@ -500,6 +506,11 @@ impl<M: WidgetDataProvider> WidgetOp for M {
     fn set_background_style(&self, background_style_name: &str) -> &dyn WidgetOp {
         self.widget_data().set_background_style(background_style_name)
     }
+
+    fn set_border_style(&self, border_style_name: &str) -> &dyn WidgetOp {
+        self.widget_data().set_border_style(border_style_name)
+    }
+
 
     fn set_action_id(&self, action_id: &str) -> &dyn WidgetOp {
         self.widget_data().set_action_id(action_id)

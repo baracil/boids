@@ -25,6 +25,7 @@ pub mod background;
 pub mod position;
 pub mod event;
 pub mod hbox;
+pub mod slider;
 
 #[cfg(test)]
 mod tests {
