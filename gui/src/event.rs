@@ -1,4 +1,3 @@
-use raylib::math::Vector2;
 
 #[derive(Debug)]
 pub enum Event {

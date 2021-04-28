@@ -20,7 +20,6 @@ use crate::widget_state::WidgetState;
 use crate::background::BackgroundRenderer;
 use crate::border::BorderRenderer;
 use crate::position::Coordinate;
-use vec_tree::ChildrenIter;
 use crate::event::Event::{Click};
 
 pub struct WidgetData {

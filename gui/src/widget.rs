@@ -3,7 +3,7 @@
 
 use crate::label::LabelPar;
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider};
 use raylib::core::drawing::RaylibDrawHandle;
 use crate::pane::PanePar;
 use crate::gui::{Gui};

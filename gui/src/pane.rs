@@ -5,7 +5,6 @@ use crate::widget_data::{WidgetData};
 use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
 use crate::size::{Size};
 use crate::position::Coordinate::{Absolute};
-use crate::mouse::MouseState;
 
 pub struct PanePar {
     widget_data: WidgetData,

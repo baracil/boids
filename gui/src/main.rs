@@ -5,8 +5,8 @@ use gui::gui::Gui;
 
 use gui::widget_operation::{WidgetOp, WidgetDataProvider};
 
-use gui::alignment::VAlignment::{Bottom, Top, Center};
-use gui::alignment::HAlignment::{Left, Right, Middle};
+use gui::alignment::VAlignment::{Top, Center};
+use gui::alignment::HAlignment::{Left, Middle};
 
 use gui::widget::Widget::{Pane, VBox, Label};
 use gui::pane::PanePar;
@@ -16,11 +16,8 @@ use gui::border::Border::Line;
 use gui::position::Coordinate::{Relative, Absolute};
 use gui::vbox::VBoxPar;
 use gui::label::LabelPar;
-use std::panic::panic_any;
 use gui::padding::Padding;
 use gui::fill::Fill::Enabled;
-use std::f32::consts::PI;
-use gui::fill::Fill;
 
 
 fn main() {

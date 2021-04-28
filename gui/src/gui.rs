@@ -14,7 +14,6 @@ use crate::widget::Widget;
 use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider};
 use crate::mouse::MouseState;
 use crate::widget_operation::UpdatableWidget;
-use std::sync::atomic::Ordering::AcqRel;
 use crate::event::Event;
 use std::cell::RefCell;
 
