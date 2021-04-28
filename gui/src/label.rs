@@ -117,5 +117,12 @@ impl RenderableWidget for LabelPar {
                 text_style.draw_text(d, text, &position)
             }
         }
+
+        {
+            let mut content_layout = self.widget_data.geometry.widget_layout.get();
+            content_layout.x+=offset.x;
+            content_layout.y+=offset.y;
+            d.draw_rectangle_lines_ex(content_layout,1,Color::GREEN)
+        }
     }
 }

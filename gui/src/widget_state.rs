@@ -36,7 +36,7 @@ impl WidgetState {
             return true;
         }
         dirty.remove(flag);
-
+        &self.dirty_flags.set(dirty);
         return false;
     }
 }

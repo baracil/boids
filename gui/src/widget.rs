@@ -10,11 +10,13 @@ use crate::gui::{Gui};
 use crate::vbox::VBoxPar;
 use crate::size::Size;
 use raylib::math::Vector2;
+use crate::hbox::HBoxPar;
 
 pub enum  Widget {
     Label(LabelPar),
     Pane(PanePar),
-    VBox(VBoxPar)
+    VBox(VBoxPar),
+    HBox(HBoxPar),
 }
 
 impl LayoutableWidget for Widget {
@@ -23,6 +25,7 @@ impl LayoutableWidget for Widget {
             Widget::Label(p) => p.get_computed_size(gui),
             Widget::Pane(p) => p.get_computed_size(gui),
             Widget::VBox(p) => p.get_computed_size(gui),
+            Widget::HBox(p) => p.get_computed_size(gui),
         }
     }
 
@@ -31,6 +34,7 @@ impl LayoutableWidget for Widget {
             Widget::Label(p) => p.update_content_size(gui, available_space),
             Widget::Pane(p) => p.update_content_size(gui, available_space),
             Widget::VBox(p) => p.update_content_size(gui, available_space),
+            Widget::HBox(p) => p.update_content_size(gui, available_space),
         }
     }
 
@@ -39,6 +43,7 @@ impl LayoutableWidget for Widget {
             Widget::Label(p) => p.update_child_positions(gui),
             Widget::Pane(p) => p.update_child_positions(gui),
             Widget::VBox(p) => p.update_child_positions(gui),
+            Widget::HBox(p) => p.update_child_positions(gui),
         }
     }
 }
@@ -50,6 +55,7 @@ impl WidgetDataProvider for Widget {
             Widget::Label(p) => p.widget_data(),
             Widget::Pane(p) => p.widget_data(),
             Widget::VBox(p) => p.widget_data(),
+            Widget::HBox(p) => p.widget_data(),
         }
     }
 
@@ -58,6 +64,7 @@ impl WidgetDataProvider for Widget {
             Widget::Label(p) => p.widget_data_mut(),
             Widget::Pane(p) => p.widget_data_mut(),
             Widget::VBox(p) => p.widget_data_mut(),
+            Widget::HBox(p) => p.widget_data_mut(),
         }
     }
 }
@@ -68,6 +75,7 @@ impl RenderableWidget for Widget {
             Widget::Label(p) => p.render(gui, d, offset),
             Widget::Pane(p) => p.render(gui, d, offset),
             Widget::VBox(p) => p.render(gui, d, offset),
+            Widget::HBox(p) => p.render(gui, d, offset),
         }
     }
 }

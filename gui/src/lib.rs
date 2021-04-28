@@ -24,6 +24,7 @@ pub mod fill;
 pub mod background;
 pub mod position;
 pub mod event;
+pub mod hbox;
 
 #[cfg(test)]
 mod tests {
