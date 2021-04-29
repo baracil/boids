@@ -1,7 +1,7 @@
 use crate::padding::Padding;
 use raylib::prelude::Vector2;
 
-#[derive(Copy, Clone,Default)]
+#[derive(Copy, Clone,Default,Debug)]
 pub struct Size {
     width: f32,
     height: f32,

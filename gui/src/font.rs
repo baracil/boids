@@ -37,7 +37,7 @@ impl FontInfo {
     ///
     pub fn draw_text(
         &self,
-        d: &mut RaylibDrawHandle<'_>,
+        d: &mut impl RaylibDraw,
         text: &str,
         position: &Vector2,
         spacing: f32,

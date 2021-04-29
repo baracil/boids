@@ -3,7 +3,7 @@ use raylib::prelude::*;
 use gui::gui::Gui;
 
 
-use gui::widget_operation::{WidgetOp, WidgetDataProvider};
+use gui::widget_operation::{WidgetOp};
 
 use gui::alignment::VAlignment::{Top, Center};
 use gui::alignment::HAlignment::{Left, Middle};
@@ -21,7 +21,6 @@ use gui::fill::Fill::Enabled;
 use gui::hbox::HBoxPar;
 use gui::slider::SliderPar;
 use std::f32::consts::PI;
-use std::borrow::BorrowMut;
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -83,7 +82,7 @@ fn main() {
     let padding = Padding::same(15.0);
     let label_padding = Padding::same(0.0);
 
-    let (_hbox1,_slider) = {
+    let (_hbox1, _slider) = {
         let _hbox1 = {
             let par = HBoxPar::new();
             par.set_spacing(&gui, 10.0)
@@ -98,9 +97,9 @@ fn main() {
 
         let _slider = {
             let par = SliderPar::new();
-            par.set_value(&gui,50.0)
-                .set_value_max(&gui,100.0)
-                .set_value_min(&gui,0.0)
+            par.set_value(&gui, 50.0)
+                .set_value_max(&gui, 100.0)
+                .set_value_min(&gui, 0.0)
                 .set_padding(&gui, label_padding)
                 .set_background_style("none")
                 .set_border_style("none")
@@ -130,7 +129,7 @@ fn main() {
 
             gui.add_child(_hbox1, Label(par))
         };
-        (_hbox1,_slider)
+        (_hbox1, _slider)
     };
 
     let _vbox2 = {
@@ -194,28 +193,28 @@ fn main() {
 
         if d.is_window_resized() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
-            camera.offset.x = screen_size.width()*0.5;
-            camera.offset.y = screen_size.height()*0.5;
-            camera.target.x = screen_size.width()*0.5;
-            camera.target.y = screen_size.height()*0.5;
+            camera.offset.x = screen_size.width() * 0.5;
+            camera.offset.y = screen_size.height() * 0.5;
+            camera.target.x = screen_size.width() * 0.5;
+            camera.target.y = screen_size.height() * 0.5;
             camera.zoom = 1.0;
         }
 
+
         {
-            let mut d = d.begin_mode2D(camera);
-            {
-                let time = d.get_time() as f32;
-                if let Slider(p) = vbox {
-                    let value = (time * 0.2 * PI).cos() * 50.0 + 50.;
-                    p.set_value(&gui, value);
-                }
-
-                gui.update_states(&d, &offset);
-                gui.layout(&screen_size);
-
-                d.clear_background(Color::WHITE);
-
+            let time = d.get_time() as f32;
+            if let Slider(p) = vbox {
+                let value = (time * 0.2 * PI).cos() * 50.0 + 50.;
+                p.set_value(&gui, value);
             }
+
+            let mouse_position = d.get_mouse_position();
+
+            gui.update_states(&d, mouse_position, &offset);
+            gui.layout(&screen_size);
+
+            d.clear_background(Color::WHITE);
+
             gui.render(&mut d, &offset);
         }
 

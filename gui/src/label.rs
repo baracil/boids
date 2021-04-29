@@ -96,7 +96,7 @@ impl WidgetSpecific for LabelPar {
 }
 
 impl RenderableWidget for LabelPar {
-    fn render(&self, _gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
+    fn render(&self, _gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
 
 
         self.widget_data.render_background_and_border(d,&offset);

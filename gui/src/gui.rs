@@ -115,14 +115,13 @@ impl Gui {
     }
 
 
-    pub fn update_states(&self, d: &RaylibDrawHandle<'_>, offset:&Vector2) {
+    pub fn update_states(&self, d: &RaylibDrawHandle<'_>, mouse_position:Vector2, offset:&Vector2) {
         self.clear_events();
         let option_root = self.tree.get_root_index().map(|idx| {self.tree.get(idx).unwrap()});
         if option_root.is_none() {
             return;
         }
 
-        let mouse_position = d.get_mouse_position();
         let mouse_state = MouseState::new(d);
 
         let root = option_root.unwrap();
@@ -166,7 +165,7 @@ impl Gui {
         root.widget_data().compute_default_target(available_space);
         root.update_child_positions(&self);
     }
-    pub fn render(&self, d: &mut RaylibDrawHandle<'_>, position: &Vector2) {
+    pub fn render(&self, d: &mut impl RaylibDraw, position: &Vector2) {
         if let Some(idx) = self.tree.get_root_index() {
             let root = self.tree.get(idx).unwrap();
             root.render(&self, d, position)

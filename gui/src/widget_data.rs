@@ -31,7 +31,7 @@ pub struct WidgetData {
 
 
 impl WidgetData {
-    pub(crate) fn render_background_and_border(&self, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
+    pub(crate) fn render_background_and_border(&self, d: &mut impl RaylibDraw, offset: &Vector2) {
         let mut chrome_layout = self.geometry.widget_layout.to_owned().into_inner();
         chrome_layout.x += offset.x;
         chrome_layout.y += offset.y;
@@ -336,8 +336,10 @@ impl<N: WidgetSpecific + WidgetDataProvider> LayoutableWidget for N {
     fn get_computed_size(&self, gui: &Gui) -> Size {
         if self.widget_data().dirty_flag_dirty(DirtyFlags::PREFERRED_SIZE) {
             let size = self.compute_size(gui);
-            self.widget_data().geometry.computed_size.set(size);
-            self.widget_data().invalidate_content_size(gui);
+            let old_size = self.widget_data().geometry.computed_size.replace(size);
+            if size.ne(&old_size) {
+                self.widget_data().invalidate_content_size(gui);
+            }
             return size;
         }
 

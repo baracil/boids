@@ -1,4 +1,4 @@
-use raylib::prelude::{Color, RaylibDrawHandle, Vector2};
+use raylib::prelude::*;
 use std::rc::Rc;
 use crate::size::Size;
 use crate::font::FontInfo;
@@ -27,7 +27,7 @@ impl TextStyle {
         self.font.measure_text(text, self.spacing)
     }
 
-    pub fn draw_text(&self, d: &mut RaylibDrawHandle, text: &str, position: &Vector2) {
+    pub fn draw_text(&self, d: &mut impl RaylibDraw, text: &str, position: &Vector2) {
         self.font.draw_text(d,text, position,self.spacing,self.color);
     }
 

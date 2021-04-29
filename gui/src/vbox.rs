@@ -1,12 +1,10 @@
 use crate::widget_data::{WidgetData};
 use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
 use crate::gui::{Gui};
-use raylib::core::drawing::RaylibDrawHandle;
 use crate::size::{Size};
-use raylib::math::Vector2;
 use std::cell::Cell;
 use crate::fill::Fill;
-use raylib::RaylibHandle;
+use raylib::prelude::*;
 
 pub struct VBoxPar {
     widget_data: WidgetData,
@@ -166,7 +164,7 @@ impl WidgetSpecific for VBoxPar {
 }
 
 impl RenderableWidget for VBoxPar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
+    fn render(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
             return;

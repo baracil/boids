@@ -1,9 +1,7 @@
 use crate::widget_data::{WidgetData};
 use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
 use crate::gui::{Gui};
-use raylib::core::drawing::RaylibDrawHandle;
 use crate::size::{Size};
-use raylib::math::Vector2;
 use std::cell::Cell;
 use crate::fill::Fill;
 use raylib::prelude::*;
@@ -50,6 +48,7 @@ impl WidgetSpecific for HBoxPar {
             return Size::empty();
         }
 
+
         let tree_index = tree_index.unwrap();
 
         let mut nb_children = 0;
@@ -60,15 +59,12 @@ impl WidgetSpecific for HBoxPar {
             if let Some(child) = gui.get_widget(child_index) {
                 let child_computed_size = child.get_computed_size(gui);
                 nb_children += 1;
-                println!("comp {:?} {}",child_index,child_computed_size.width());
                 max_height = max_height.max(child_computed_size.height());
                 summed_width += child_computed_size.width();
             }
         }
         let spacing = self.spacing.get();
         summed_width += spacing * ((nb_children - 1).max(0) as f32);
-
-        println!("sum+spac {}",summed_width);
 
         let computed = Size::new( summed_width, max_height).with_padding(&self.widget_data().model.padding.get());
 
@@ -105,9 +101,6 @@ impl WidgetSpecific for HBoxPar {
                 }
             }
         }
-
-        println!("sum+fix {}",summed_fixed_width);
-
 
         let padding = self.widget_data.model.padding.get();
         let width = available_size.width() - padding.h_padding();
@@ -173,7 +166,7 @@ impl WidgetSpecific for HBoxPar {
 }
 
 impl RenderableWidget for HBoxPar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
+    fn render(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         let tree_index = self.widget_data.tree_index;
         if tree_index.is_none() {
             return;
@@ -182,7 +175,7 @@ impl RenderableWidget for HBoxPar {
 
         self.widget_data.render_background_and_border(d, &offset);
 
-        let mut content_layout = self.widget_data.geometry.content_layout.get();
+        let content_layout = self.widget_data.geometry.content_layout.get();
         let mut target = offset.clone();
         target.x += content_layout.x;
         target.y += content_layout.y;
@@ -194,12 +187,6 @@ impl RenderableWidget for HBoxPar {
                 w.render(gui,d,&target);
             }
         }
-        // {
-        //     content_layout.x += offset.x;
-        //     content_layout.y += offset.y;
-        //     d.draw_rectangle_lines_ex(content_layout,1,Color::GREEN);
-        // }
-
 
     }
 

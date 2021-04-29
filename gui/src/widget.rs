@@ -4,7 +4,6 @@
 use crate::label::LabelPar;
 use crate::widget_data::{WidgetData};
 use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider};
-use raylib::core::drawing::{RaylibDrawHandle, RaylibMode2D};
 use crate::pane::PanePar;
 use crate::gui::{Gui};
 use crate::vbox::VBoxPar;
@@ -12,7 +11,7 @@ use crate::size::Size;
 use raylib::math::Vector2;
 use crate::hbox::HBoxPar;
 use crate::slider::SliderPar;
-use raylib::RaylibHandle;
+use raylib::prelude::*;
 
 pub enum  Widget {
     Label(LabelPar),
@@ -78,7 +77,7 @@ impl WidgetDataProvider for Widget {
 }
 
 impl RenderableWidget for Widget {
-    fn render(&self, gui:&Gui, d: &mut RaylibDrawHandle, offset:&Vector2) {
+    fn render(&self, gui:&Gui, d: &mut impl RaylibDraw, offset:&Vector2) {
         match self {
             Widget::Label(p) => p.render(gui, d, offset),
             Widget::Pane(p) => p.render(gui, d, offset),

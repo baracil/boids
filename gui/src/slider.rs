@@ -4,8 +4,6 @@ use crate::gui::Gui;
 use crate::widget_operation::{WidgetDataProvider, WidgetSpecific, RenderableWidget};
 use crate::size::Size;
 use raylib::prelude::*;
-use std::rc::Rc;
-use crate::text_style::TextStyle;
 
 pub struct SliderPar {
     widget_data: WidgetData,
@@ -99,7 +97,7 @@ impl WidgetDataProvider for SliderPar {
 }
 
 impl WidgetSpecific for SliderPar {
-    fn compute_size(&self, gui: &Gui) -> Size {
+    fn compute_size(&self, _gui: &Gui) -> Size {
         let formatted_value = self.format_value(self.value.get());
         let text_size = self.measure_value(&formatted_value);
         self.value_text.replace(formatted_value);
@@ -108,13 +106,13 @@ impl WidgetSpecific for SliderPar {
         return text_size.max(&bar_size).with_padding(&self.widget_data.model.padding.get());
     }
 
-    fn compute_child_content_size(&self, gui: &Gui, available_size: Size) {}
+    fn compute_child_content_size(&self, _gui: &Gui, _available_size: Size) {}
 
-    fn compute_child_positions(&self, gui: &Gui) {}
+    fn compute_child_positions(&self, _gui: &Gui) {}
 }
 
 impl RenderableWidget for SliderPar {
-    fn render(&self, gui: &Gui, d: &mut RaylibDrawHandle<'_>, offset: &Vector2) {
+    fn render(&self, _gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         self.widget_data.render_background_and_border(d, offset);
 
         let mut content_layout = self.widget_data.geometry.content_layout.get();
@@ -151,10 +149,6 @@ impl RenderableWidget for SliderPar {
                 ts.draw_text(d,borrowed_text.as_str(),&position);
             }
         }
-
-
-
-
 
     }
 
