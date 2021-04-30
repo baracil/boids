@@ -99,6 +99,7 @@ fn main() {
             par.set_value(&gui, 50.0)
                 .set_value_max(&gui, 100.0)
                 .set_value_min(&gui, 0.0)
+                .set_action_id("slider")
                 .set_padding(&gui, label_padding)
                 .set_background_style("none")
                 .set_border_style("none")
@@ -206,13 +207,6 @@ fn main() {
         }
 
         {
-            let time = d.get_time() as f32;
-            if let Slider(p) = vbox {
-                let value = (time * 0.2 * PI).cos() * 50.0 + 50.;
-                p.set_value(&gui, value);
-            }
-
-
             gui.update_states(&mouse_position, &offset);
             gui.handle_events(&mouse_position, &mouse_state, &offset);
             gui.layout(&screen_size);

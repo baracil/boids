@@ -6,6 +6,7 @@ use std::cell::Cell;
 use crate::fill::Fill;
 use raylib::prelude::*;
 use std::ops::Deref;
+use crate::mouse::MouseState;
 
 pub struct VBoxPar {
     widget_data: WidgetData,
@@ -83,7 +84,7 @@ impl WidgetSpecific for VBoxPar {
         let spacing = self.spacing.get();
         summed_height += spacing * ((nb_children - 1).max(0) as f32);
 
-        let computed = Size::new(max_width, summed_height).with_padding(&self.get_padding());
+        let computed = Size::new(max_width, summed_height).with_padding(&self.padding());
 
         let mut preferred = self.get_preferred_size();
         preferred.replace_empty_dimensions_and_max(&computed);
@@ -117,7 +118,7 @@ impl WidgetSpecific for VBoxPar {
             }
         }
 
-        let padding = self.get_padding();
+        let padding = self.padding();
         let width = available_size.width() - padding.h_padding();
         let height= available_size.height() - padding.v_padding();
 
@@ -158,7 +159,7 @@ impl WidgetSpecific for VBoxPar {
         let tree_index = tree_index.unwrap();
 
         let content_size = {
-            let content_layout = self.get_content_layout();
+            let content_layout = self.content_layout();
             Size::new(content_layout.width, content_layout.height)
         };
 
@@ -172,11 +173,16 @@ impl WidgetSpecific for VBoxPar {
                     w.set_widget_target(&position);
                     w.update_child_positions(gui);
                 }
-                position.y += w.get_widget_height() + spacing;
+                position.y += w.widget_height() + spacing;
             }
         }
     }
 
     fn render_my_visual(&self, _gui: &Gui, _d: &mut impl RaylibDraw, _offset: &Vector2) {
     }
+
+    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
+        self.widget_data.wd_update_action(gui,offset,mouse_position,mouse_state);
+    }
+
 }

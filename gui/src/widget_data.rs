@@ -23,6 +23,7 @@ use crate::position::{Coordinate, Position};
 use crate::event::Event::{Click};
 use crate::text_style::TextStyle;
 use std::rc::Rc;
+use crate::event::ClickPar;
 
 pub struct WidgetData {
     pub tree_index: Option<Index>,
@@ -55,7 +56,7 @@ impl WidgetData {
     }
 
     pub(crate) fn render_children(&self, gui:&Gui,tree_index:Index, d:&mut impl RaylibDraw, offset:&Vector2) {
-        let content_layout = self.get_content_layout();
+        let content_layout = self.content_layout();
         let mut target = offset.clone();
         target.x += content_layout.x;
         target.y += content_layout.y;
@@ -87,7 +88,7 @@ impl WidgetData {
         self.geometry.widget_layout.get()
     }
 
-    pub fn get_widget_height(&self) -> f32 {
+    pub fn widget_height(&self) -> f32 {
         self.geometry.widget_size.borrow().size().height()
     }
 
@@ -95,7 +96,7 @@ impl WidgetData {
         self.geometry.widget_size.borrow().size().width()
     }
 
-    pub fn get_content_layout(&self) -> Rectangle {
+    pub fn content_layout(&self) -> Rectangle {
         self.geometry.content_layout.get()
     }
 
@@ -115,7 +116,7 @@ impl WidgetData {
         self.model.position.get()
     }
 
-    pub fn get_padding(&self) -> Padding {
+    pub fn padding(&self) -> Padding {
         self.model.padding.get()
     }
 
@@ -209,6 +210,15 @@ impl WidgetData {
         }
     }
 
+    pub fn action_id<>(&self) -> Option<String> {
+        let borrowed = self.model.action_id.borrow();
+
+        match borrowed.as_ref() {
+            None => None,
+            Some(r) => Some(r.to_owned())
+        }
+    }
+
     pub fn set_alignment(&self, gui: &Gui, valignment: VAlignment, haligment: HAlignment) {
         let mut current_alignment = self.model.alignment.get();
         if current_alignment.vertical.eq(&valignment) && current_alignment.horizontal.eq(&haligment) {
@@ -270,7 +280,7 @@ impl WidgetData {
             (_, false, false) | (None, _, _) => {}
 
             (Some(idx), _, _) => {
-                let padding = self.get_padding();
+                let padding = self.padding();
                 let child_offset = Vector2::new(abs_widget_layout.x+padding.left, abs_widget_layout.y+padding.top);
                 for child_index in gui.get_widget_children(idx) {
                     if let Some(w) = gui.get_widget(child_index) {
@@ -283,7 +293,7 @@ impl WidgetData {
         new_hoovered
     }
 
-    pub fn update_action(&self, gui:&Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState)  {
+    pub fn wd_update_action(&self, gui:&Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState)  {
         let mut armed = self.state.armed.get();
         let clickable = self.model.clickable.get();
         let hoovered = self.state.hoovered.get();
@@ -292,7 +302,7 @@ impl WidgetData {
             let action_id = self.model.action_id.clone().into_inner();
             match (armed, action_id) {
                 (true, Some(action_id)) => {
-                    gui.add_event(Click{action_id })
+                    gui.add_event(Click(ClickPar::new(&action_id)))
                 }
                 _ => {}
             }
@@ -308,8 +318,8 @@ impl WidgetData {
 
         if let Some(idx) = self.tree_index {
             for child_index in gui.get_widget_children(idx) {
-                let widget_layout = self.geometry.widget_layout.get();
-                let child_offset = Vector2::new(widget_layout.x+offset.x, widget_layout.y+offset.y);
+                let content_layout = self.content_layout();
+                let child_offset = Vector2::new(content_layout.x+offset.x, content_layout.y+offset.y);
                 if let Some(w) = gui.get_widget(child_index) {
                     w.update_action(gui,&child_offset,mouse_position,mouse_state);
                 }
@@ -421,14 +431,14 @@ impl<N: WidgetSpecific> LayoutableWidget for N {
             }
             content_size.min_mut(&available_space);
 
-
-            self.compute_child_content_size(gui, content_size);
-
             {
                 let mut content_cache = self.get_widget_data().geometry.widget_size.borrow_mut();
                 content_cache.set_reference(available_space.clone());
                 content_cache.set_size(content_size);
             }
+
+            self.compute_child_content_size(gui, content_size);
+
 
             self.get_widget_data().copy_size_to_layout();
             self.get_widget_data().invalidate_position(gui);

@@ -6,6 +6,7 @@ use std::cell::Cell;
 use crate::fill::Fill;
 use raylib::prelude::*;
 use std::ops::Deref;
+use crate::mouse::MouseState;
 
 pub struct HBoxPar {
     widget_data: WidgetData,
@@ -73,7 +74,7 @@ impl WidgetSpecific for HBoxPar {
         let spacing = self.spacing.get();
         summed_width += spacing * ((nb_children - 1).max(0) as f32);
 
-        let computed = Size::new( summed_width, max_height).with_padding(&self.get_padding());
+        let computed = Size::new( summed_width, max_height).with_padding(&self.padding());
 
 
 
@@ -109,7 +110,7 @@ impl WidgetSpecific for HBoxPar {
             }
         }
 
-        let padding = self.get_padding();
+        let padding = self.padding();
         let width = available_size.width() - padding.h_padding();
         let height= available_size.height() - padding.v_padding();
 
@@ -149,7 +150,7 @@ impl WidgetSpecific for HBoxPar {
         let tree_index = tree_index.unwrap();
 
         let content_size = {
-            let content_layout = self.get_content_layout();
+            let content_layout = self.content_layout();
             Size::new(content_layout.width, content_layout.height)
         };
 
@@ -159,7 +160,7 @@ impl WidgetSpecific for HBoxPar {
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
                 {
-                    let widget_height = w.get_widget_height();
+                    let widget_height = w.widget_height();
                     position.y = (content_size.height() - widget_height)*0.5;
                     w.set_widget_target(&position);
                     w.update_child_positions(gui);
@@ -172,6 +173,10 @@ impl WidgetSpecific for HBoxPar {
 
 
     fn render_my_visual(&self, _gui: &Gui, _d: &mut impl RaylibDraw, _offset: &Vector2) {
+    }
+
+    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
+        self.widget_data.wd_update_action(gui,offset,mouse_position,mouse_state);
     }
 
 }

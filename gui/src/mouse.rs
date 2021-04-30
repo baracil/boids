@@ -22,6 +22,7 @@ pub struct MouseButtonState {
 #[derive(Debug)]
 pub struct DragInfo {
     in_progress:bool,
+    started:bool,
     done:bool,
     starting_position:Vector2,
     current_position:Vector2,
@@ -65,6 +66,7 @@ impl Default for DragInfo {
     fn default() -> Self {
         Self{
             in_progress:false,
+            started:false,
             done:false,
             starting_position:Default::default(),
             current_position:Default::default(),
@@ -83,13 +85,17 @@ impl DragInfo {
         }
 
         if button_state.is_down() {
+            self.started = button_state.is_pressed();
             self.delta.x = self.current_position.x - self.starting_position.x;
             self.delta.y = self.current_position.y - self.starting_position.y;
         }
 
         if button_state.is_released() {
             self.in_progress = false;
-            self.done = true;
+        }
+
+        if button_state.is_up() {
+            self.done = button_state.is_released();
         }
     }
 
@@ -97,6 +103,8 @@ impl DragInfo {
     pub fn in_progress(&self) -> bool {
         self.in_progress
     }
+
+
     pub fn done(&self) -> bool {
         self.done
     }
@@ -108,6 +116,9 @@ impl DragInfo {
     }
     pub fn delta(&self) -> &Vector2 {
         &self.delta
+    }
+    pub fn started(&self) -> bool {
+        self.started
     }
 }
 

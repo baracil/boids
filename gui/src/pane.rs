@@ -6,6 +6,7 @@ use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetSpecific
 use crate::size::{Size};
 use crate::position::Coordinate::{Absolute};
 use std::ops::Deref;
+use crate::mouse::MouseState;
 
 pub struct PanePar {
     widget_data: WidgetData,
@@ -91,7 +92,7 @@ impl WidgetSpecific for PanePar {
         let pref_width = (xmax - xmin).max(max_size.width());
         let pref_height = (ymax - ymin).max(max_size.height());
 
-        let children_size = Size::new(pref_width, pref_height).with_padding(&self.get_padding());
+        let children_size = Size::new(pref_width, pref_height).with_padding(&self.padding());
 
         let mut user_preferred_size = self.get_preferred_size();
 
@@ -106,7 +107,7 @@ impl WidgetSpecific for PanePar {
         }
         let tree_index = tree_index.unwrap();
 
-        let available_size_for_children = available_size.without_padding(&self.get_padding());
+        let available_size_for_children = available_size.without_padding(&self.padding());
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
@@ -123,7 +124,7 @@ impl WidgetSpecific for PanePar {
         let tree_index = tree_index.unwrap();
 
         let content_size = {
-            let content_layout = self.get_content_layout();
+            let content_layout = self.content_layout();
             Size::new(content_layout.width, content_layout.height)
         };
 
@@ -139,5 +140,10 @@ impl WidgetSpecific for PanePar {
     }
 
     fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {}
+
+    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
+        self.widget_data.wd_update_action(gui,offset,mouse_position,mouse_state);
+    }
+
 }
 

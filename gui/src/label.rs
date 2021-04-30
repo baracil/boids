@@ -9,6 +9,7 @@ use crate::widget_data::{WidgetData};
 use crate::widget_operation::{RenderableWidget, WidgetSpecific};
 use crate::gui::{Gui};
 use crate::size::{Size};
+use crate::mouse::MouseState;
 
 pub struct LabelPar {
     widget_data: WidgetData,
@@ -84,7 +85,7 @@ impl WidgetSpecific for LabelPar {
     }
 
     fn compute_size(&self, _gui: &Gui) -> Size {
-        let padding = self.get_padding();
+        let padding = self.padding();
         let text_size = self.measure_text();
 
         self.text_size.set(text_size);
@@ -102,9 +103,13 @@ impl WidgetSpecific for LabelPar {
     fn compute_child_positions(&self, _gui: &Gui) {
     }
 
+    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
+        self.widget_data.wd_update_action(gui,offset,mouse_position,mouse_state);
+    }
+
     fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         if let Some(text) = self.text.borrow().as_ref() {
-            let content_layout = self.get_content_layout();
+            let content_layout = self.content_layout();
             let text_size = self.text_size.get();
             let position = Vector2 {
                 x: content_layout.x + offset.x + (content_layout.width - text_size.width())*0.5,
@@ -116,4 +121,6 @@ impl WidgetSpecific for LabelPar {
             }
         }
     }
+
+
 }
