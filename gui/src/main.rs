@@ -193,10 +193,12 @@ fn main() {
     let mut camera = Camera2D::default();
     let mut mouse_state = MouseState::new();
 
+
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
 
 
+        println!("{:?}", d.is_window_resized());
         if d.is_window_resized() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
             camera.offset.x = screen_size.width() * 0.5;
@@ -209,15 +211,15 @@ fn main() {
         {
             mouse_state.update(&d);
 
-            gui.update_states(&mouse_state.mouse_position(), &offset);
-            gui.handle_events(&mouse_state, &offset);
-            gui.layout(&screen_size);
 
             d.clear_background(Color::WHITE);
 
+            gui.update_states(&mouse_state.mouse_position(), &offset);
+            gui.handle_events(&mouse_state, &offset);
+            gui.layout(&screen_size);
             gui.render(&mut d, &offset);
         }
 
-        gui.display_events();
+        gui.get_events();
     }
 }

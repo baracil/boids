@@ -219,15 +219,16 @@ impl WidgetData {
         }
     }
 
-    pub fn set_alignment(&self, gui: &Gui, valignment: VAlignment, haligment: HAlignment) {
+    pub fn set_alignment(&self, gui: &Gui, valignment: VAlignment, haligment: HAlignment) -> &WidgetData{
         let mut current_alignment = self.model.alignment.get();
         if current_alignment.vertical.eq(&valignment) && current_alignment.horizontal.eq(&haligment) {
-            return;
+            return self;
         }
         current_alignment.vertical = valignment;
         current_alignment.horizontal = haligment;
         self.model.alignment.set(current_alignment);
-        self.invalidate_position(gui)
+        self.invalidate_position(gui);
+        self
     }
 
     pub fn set_tree_index(&mut self, tree_index: Index) {
@@ -510,6 +511,7 @@ impl WidgetData {
 
 
 
+    //todo x and y should not be references
     pub fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &WidgetData {
         let mut current_position = self.model.position.get();
         if current_position.get_x().eq(&x) && current_position.get_y().eq(&y) {

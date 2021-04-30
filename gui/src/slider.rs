@@ -156,7 +156,7 @@ impl WidgetSpecific for SliderPar {
         let drag_info = mouse_state.drag_info();
 
         if mouse_state.right().is_pressed() {
-            let value = self.drag_value.get();
+            let value = self.value.get();
             self.drag_in_progress.set(false);
             self.invalidate_preferred_size(gui);
             self.invalidate_position(gui);

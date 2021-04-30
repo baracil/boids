@@ -1,11 +1,11 @@
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Event {
     Click(ClickPar),
     Drag(DragPar)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ClickPar {
     action_id:String,
 }
@@ -23,7 +23,7 @@ impl ClickPar {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct DragPar {
     action_id:String,
     value:f32,

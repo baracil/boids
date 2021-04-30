@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use generational_arena::{Index, Arena};
+use generational_arena::{Index, Arena, Iter};
 use raylib::prelude::*;
 use vec_tree::{ChildrenIter, VecTree};
 
@@ -45,6 +45,14 @@ impl Gui {
             tree,
             events: RefCell::new(Arena::new())
         };
+    }
+
+    pub fn layout_and_render(&self, d:&mut impl RaylibDraw, available_size:&Size, mouse_state:&MouseState, offset:&Vector2) {
+       self.update_states(&mouse_state.mouse_position(), &offset);
+       self.handle_events(&mouse_state, &offset);
+       self.layout(&available_size);
+       self.render(d, &offset);
+
     }
 }
 
@@ -108,10 +116,9 @@ impl Gui {
         borrowed_events.insert(event);
     }
 
-    pub fn display_events(&self) {
-        let borrowed_events = self.events.borrow();
-
-        borrowed_events.iter().for_each(|e| {println!("Event {:?}",e)})
+    pub fn get_events(&self) -> Vec<Event> {
+        let arena = self.events.borrow();
+        arena.iter().map(|(idx,event)| event.clone() ).collect()
     }
 
 

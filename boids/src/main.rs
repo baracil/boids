@@ -2,11 +2,26 @@ use raylib::prelude::*;
 
 use crate::data::boid::Boid;
 use crate::data::world::World;
-use crate::gui_form::{ButtonPar, get_gui_item, GuiElement};
-use crate::gui_form::GuiElement::Button;
+use gui::gui::{Gui, GuiData};
+use gui::widget::Widget::{VBox, Label, Slider};
+use gui::vbox::VBoxPar;
+use gui::padding::Padding;
+use gui::border::Border;
+use gui::border::Border::Line;
+use gui::background::Background;
+use gui::background::Background::Solid;
+use gui::mouse::MouseState;
+use gui::size::Size;
+use gui::fill::Fill;
+use gui::fill::Fill::Enabled;
+use gui::alignment::VAlignment::Top;
+use gui::alignment::HAlignment::Left;
+use gui::position::Coordinate::Absolute;
+use gui::slider::SliderPar;
+use std::process::abort;
+use gui::event::Event::Drag;
 
 mod data;
-mod gui_form;
 
 const DEFAULT_NB_BIRDS: usize = 2000;
 const DEFAULT_WORLD_SIZE: f32 = 10.;
@@ -16,77 +31,13 @@ pub struct ScreenSize {
     pub height: i32,
 }
 
-pub struct Gui {
-    pub quit_button: GuiElement,
-}
+const COHESION_ID:&str = "cohesion_id";
+const SEPARATION_ID:&str = "separation_id";
+const ALIGNMENT_ID:&str = "alignment_id";
 
-fn draw_gui(d: &mut RaylibDrawHandle, app_state: &mut BoidsModel) -> bool {
-    d.draw_rectangle(
-        0,
-        0,
-        app_state.gui_width as i32,
-        app_state.screen_size.height,
-        Color::RED,
-    );
-
-    {
-        let mut should_quit = false;
-
-        should_quit |= draw_element(
-            d,
-            &mut app_state.gui.quit_button,
-            &Vector2 { x: 0.0, y: 0.0 },
-        );
-        should_quit |= draw_element(
-            d,
-            &mut app_state.gui.quit_button,
-            &Vector2 { x: 0.0, y: 60.0 },
-        );
-
-        return should_quit;
-    }
-}
-
-fn draw_element(d: &mut RaylibDrawHandle, element: &mut GuiElement, position: &Vector2) -> bool {
-    let mouse_position = d.get_mouse_position();
-    let left_pressed = d.is_mouse_button_released(raylib::consts::MouseButton::MOUSE_LEFT_BUTTON);
-
-    let gui_item = get_gui_item(element);
-
-    gui_item.set_position(position);
-
-    d.draw_rectangle_rec(gui_item.geometry(), gui_item.background_color());
-
-    let inside = gui_item
-        .geometry()
-        .check_collision_point_rec(mouse_position);
-
-    if left_pressed && inside {
-        let element_id: &str = {
-            match &element {
-                Button(a) => a.id.as_str(),
-                GuiElement::Slider(a) => a.id.as_str(),
-            }
-        };
-
-        return on_button_pressed(element_id);
-    }
-    false
-}
-
-fn on_button_pressed(id: &str) -> bool {
-    if id == "quit" {
-        println!("QUIT PRESSED");
-        true
-    } else {
-        false
-    }
-}
-
-fn draw_birds<'a>(d: &mut RaylibDrawHandle<'a>, camera: &Camera2D, boids: &[Boid], bird_size: f32) {
+fn draw_birds(d: &mut impl RaylibDraw, boids: &[Boid], bird_size: f32) {
     {
         let size_factor: f32 = 1.2;
-        let mut d = d.begin_mode2D(camera);
 
         let mut head = Vector2 { x: 0.0, y: 0.0 };
         let mut left_wing = Vector2 { x: 0.0, y: 0.0 };
@@ -112,32 +63,16 @@ fn draw_birds<'a>(d: &mut RaylibDrawHandle<'a>, camera: &Camera2D, boids: &[Boid
 pub struct BoidsModel {
     pub gui_width: f32,
     pub screen_size: ScreenSize,
-    pub gui: Gui,
     pub world: World,
 }
 
 impl BoidsModel {
     pub fn new(nb_birds: usize, world_size: f32) -> Self {
-        let quit_button = ButtonPar {
-            id: "quit".to_string(),
-            geometry: Rectangle {
-                width: 100.,
-                height: 30.,
-                x: 0.0,
-                y: 0.0,
-            },
-            color: Color::BLACK,
-            background_color: Color::GREEN,
-            text: "Quit".to_string(),
-        };
         BoidsModel {
             gui_width: 200.0,
             screen_size: ScreenSize {
                 width: 0,
                 height: 0,
-            },
-            gui: Gui {
-                quit_button: Button(Box::new(quit_button)),
             },
             world: World::new(nb_birds, world_size),
         }
@@ -162,6 +97,7 @@ fn main() {
 
     app_state.world.initialize();
 
+
     let (mut rl, thread) = raylib::init()
         .size(640, 480)
         .msaa_4x()
@@ -172,7 +108,70 @@ fn main() {
 
     rl.set_target_fps(60);
 
-    let mut camera_outdated = true;
+
+    let mut gui = Gui::new();
+
+    gui.load_font(&mut rl, &thread, "default", "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf", 48, 200);
+    gui.load_font(&mut rl, &thread, "small", "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf", 20, 200);
+
+    let red = Color::RED;
+
+    gui.add_border("default", Line { color: Color::BLACK, thickness: 1.0 });
+    gui.add_background("red", Solid { idle_color: red, hoovered_color: red, armed_color: red });
+    gui.add_text_style("default","default",Color::BLACK,0.0);
+
+    let container = {
+        let par = VBoxPar::new();
+        par.set_spacing(&gui, 50.)
+            .set_padding(&gui, Padding::same(20.0))
+            .set_border_style("default")
+            .set_preferred_width(&gui, 300.0)
+            .enable_fill_height(&gui, Enabled { weight: 1 })
+            .set_position(&gui, &Absolute(0.0), &Absolute(0.0))
+            .set_alignment(&gui, Top, Left)
+            .set_background_style("red");
+        gui.insert_root(VBox(par))
+    };
+
+    {
+        let par = SliderPar::new();
+        par.set_value(&gui, 100.0 * app_state.world.parameters.alignment_factor)
+            .set_value_min(&gui, 0.0)
+            .set_value_max(&gui, 100.0)
+            .set_text_style("default")
+            .set_action_id(ALIGNMENT_ID)
+            .set_text_style("default")
+            .enable_fill_width(&gui, Enabled { weight: 1 });
+
+        gui.add_child(container, Slider(par));
+    }
+
+    {
+        let par = SliderPar::new();
+        par.set_value(&gui, 100.0 * app_state.world.parameters.cohesion_factor)
+            .set_value_min(&gui, 0.0)
+            .set_value_max(&gui, 100.0)
+            .set_text_style("default")
+            .set_action_id(COHESION_ID)
+            .set_text_style("default")
+            .enable_fill_width(&gui, Enabled { weight: 1 });
+
+        gui.add_child(container, Slider(par));
+    }
+    {
+        let par = SliderPar::new();
+        par.set_value(&gui, 100.0 * app_state.world.parameters.separation_factor)
+            .set_value_min(&gui, 0.0)
+            .set_value_max(&gui, 100.0)
+            .set_text_style("default")
+            .set_action_id(SEPARATION_ID)
+            .set_text_style("default")
+            .enable_fill_width(&gui, Enabled { weight: 1 });
+
+        gui.add_child(container, Slider(par));
+    }
+
+
     let mut camera = Camera2D {
         target: Vector2 { x: 0., y: 0. },
         offset: Vector2 { x: 0.0, y: 0.0 },
@@ -180,13 +179,19 @@ fn main() {
         zoom: 1.0,
     };
 
+
+    app_state.screen_size.width = rl.get_screen_width();
+    app_state.screen_size.height = rl.get_screen_height();
+
+    let mut mouse_state = MouseState::new();
+    let mut screen_size: Size = Size::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32);
     let mut should_quit = false;
+    let offset = Vector2::zero();
     while !rl.window_should_close() && !should_quit {
         let mut d = rl.begin_drawing(&thread);
 
-        camera_outdated = camera_outdated || d.is_window_resized();
-
-        if camera_outdated {
+        if d.is_window_resized() {
+            screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
             app_state.screen_size.width = d.get_screen_width();
             app_state.screen_size.height = d.get_screen_height();
             camera.offset = app_state.camera_offset();
@@ -198,17 +203,35 @@ fn main() {
         d.clear_background(Color::WHITE);
         d.draw_fps(app_state.screen_size.width - 100, 0);
 
+        mouse_state.update(&d);
+
+
+        gui.layout_and_render(&mut d, &screen_size, &mouse_state, &offset);
+
+
         {
-            should_quit |= draw_gui(&mut d, &mut app_state);
+            let mut d = d.begin_mode2D(camera);
             draw_birds(
                 &mut d,
-                &mut camera,
                 &(app_state.world.current[..]),
                 app_state.world.parameters.bird_size,
             );
         }
 
         let dt = d.get_frame_time();
+
+        let events = gui.get_events();
+        for event in events.iter() {
+            if let Drag(p) = event {
+                match p.action_id() {
+                    COHESION_ID => {app_state.world.parameters.cohesion_factor = p.value()/100.},
+                    ALIGNMENT_ID => {app_state.world.parameters.alignment_factor = p.value()/100.},
+                    SEPARATION_ID => {app_state.world.parameters.separation_factor = p.value()/100.},
+                    &_ => {}
+                }
+            }
+
+        }
 
         app_state.world.compute(dt);
     }
