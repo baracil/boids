@@ -134,29 +134,10 @@ impl WidgetSpecific for PanePar {
                 w.update_child_positions(gui)
             }
         }
+
+
     }
+
+    fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {}
 }
 
-impl RenderableWidget for PanePar {
-
-    fn render(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
-        let tree_index = self.get_tree_index();
-        if tree_index.is_none() {
-            return;
-        }
-        let tree_index = tree_index.unwrap();
-
-        self.render_background_and_border(d, &offset);
-
-        let content_layout = self.get_content_layout();
-        let mut target = offset.clone();
-        target.x += content_layout.x;
-        target.y += content_layout.y;
-
-        for child_index in gui.get_widget_children(tree_index) {
-            if let Some(w) = gui.get_widget(child_index) {
-                w.render(gui, d, &target);
-            }
-        }
-    }
-}

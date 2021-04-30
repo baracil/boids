@@ -122,12 +122,9 @@ impl WidgetSpecific for SliderPar {
     fn compute_child_content_size(&self, _gui: &Gui, _available_size: Size) {}
 
     fn compute_child_positions(&self, _gui: &Gui) {}
-}
 
-impl RenderableWidget for SliderPar {
-    fn render(&self, _gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
-        self.render_background_and_border(d, offset);
 
+    fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         let mut content_layout = self.get_content_layout();
 
         content_layout.x += offset.x;

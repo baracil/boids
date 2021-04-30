@@ -108,13 +108,8 @@ impl WidgetSpecific for LabelPar {
 
     fn compute_child_positions(&self, _gui: &Gui) {
     }
-}
 
-impl RenderableWidget for LabelPar {
-    fn render(&self, _gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
-
-        self.render_background_and_border(d,&offset);
-
+    fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         if let Some(text) = self.text.borrow().as_ref() {
             let content_layout = self.get_content_layout();
             let text_size = self.text_size.get();
@@ -127,7 +122,5 @@ impl RenderableWidget for LabelPar {
                 text_style.draw_text(d, text, &position)
             }
         }
-
     }
-
 }

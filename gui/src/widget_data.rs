@@ -15,7 +15,7 @@ use crate::size::Size;
 use crate::widget::Widget;
 use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
-use crate::widget_operation::{DirtyFlags, UpdatableWidget, LayoutableWidget, WidgetSpecific};
+use crate::widget_operation::{DirtyFlags, UpdatableWidget, LayoutableWidget, WidgetSpecific, RenderableWidget};
 use crate::widget_state::WidgetState;
 use crate::background::BackgroundRenderer;
 use crate::border::BorderRenderer;
@@ -50,6 +50,19 @@ impl WidgetData {
             let borrowed_border = &self.state.border.borrow();
             if let Some(border) = borrowed_border.as_deref() {
                 border.draw(d, &chrome_layout)
+            }
+        }
+    }
+
+    pub(crate) fn render_children(&self, gui:&Gui,tree_index:Index, d:&mut impl RaylibDraw, offset:&Vector2) {
+        let content_layout = self.get_content_layout();
+        let mut target = offset.clone();
+        target.x += content_layout.x;
+        target.y += content_layout.y;
+
+        for child_index in gui.get_widget_children(tree_index) {
+            if let Some(w) = gui.get_widget(child_index) {
+                w.render(gui, d, &target);
             }
         }
     }
