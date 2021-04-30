@@ -4,6 +4,7 @@ pub struct MouseState {
     left: MouseButtonState,
     middle: MouseButtonState,
     right: MouseButtonState,
+    mouse_position: Vector2,
     drag_info: DragInfo,
 }
 
@@ -33,6 +34,7 @@ pub struct DragInfo {
 impl MouseState {
     pub fn new() -> Self {
         Self {
+            mouse_position:Vector2::default(),
             right: MouseButtonState::new(raylib::consts::MouseButton::MOUSE_RIGHT_BUTTON),
             middle: MouseButtonState::new(raylib::consts::MouseButton::MOUSE_MIDDLE_BUTTON),
             left: MouseButtonState::new(raylib::consts::MouseButton::MOUSE_LEFT_BUTTON),
@@ -40,12 +42,29 @@ impl MouseState {
         }
     }
 
-    pub fn update(&mut self, d:&RaylibDrawHandle, mouse_position:&Vector2) {
+    pub fn update(&mut self, d:&RaylibDrawHandle) {
         self.left.update(d);
         self.middle.update(d);
         self.right.update(d);
 
-        self.drag_info.update_drag_info(&self.left, mouse_position)
+        self.mouse_position = d.get_mouse_position();
+
+        self.drag_info.update_drag_info(&self.left, &self.mouse_position)
+    }
+
+    pub fn update2D(&mut self, d:&RaylibDrawHandle, camera:Camera2D) {
+        self.left.update(d);
+        self.middle.update(d);
+        self.right.update(d);
+
+        let mouse_position = d.get_mouse_position();
+        self.mouse_position = d.get_screen_to_world2D(mouse_position,camera);
+
+        self.drag_info.update_drag_info(&self.left, &self.mouse_position)
+    }
+
+    pub fn mouse_position(&self) -> &Vector2 {
+        &self.mouse_position
     }
 
     pub fn left(&self) -> &MouseButtonState {

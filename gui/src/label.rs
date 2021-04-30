@@ -103,8 +103,8 @@ impl WidgetSpecific for LabelPar {
     fn compute_child_positions(&self, _gui: &Gui) {
     }
 
-    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
-        self.widget_data.wd_update_action(gui,offset,mouse_position,mouse_state);
+    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_state: &MouseState) {
+        self.widget_data.wd_update_action(gui,offset,mouse_state);
     }
 
     fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {

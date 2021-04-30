@@ -293,7 +293,7 @@ impl WidgetData {
         new_hoovered
     }
 
-    pub fn wd_update_action(&self, gui:&Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState)  {
+    pub fn wd_update_action(&self, gui:&Gui, offset: &Vector2, mouse_state: &MouseState)  {
         let mut armed = self.state.armed.get();
         let clickable = self.model.clickable.get();
         let hoovered = self.state.hoovered.get();
@@ -321,7 +321,7 @@ impl WidgetData {
                 let content_layout = self.content_layout();
                 let child_offset = Vector2::new(content_layout.x+offset.x, content_layout.y+offset.y);
                 if let Some(w) = gui.get_widget(child_index) {
-                    w.update_action(gui,&child_offset,mouse_position,mouse_state);
+                    w.update_action(gui,&child_offset,mouse_state);
                 }
 
             }
@@ -394,8 +394,8 @@ impl WidgetData {
 }
 
 impl UpdatableWidget for Widget {
-    fn update_with_mouse_information(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
-        self.update_action(gui,offset,mouse_position,mouse_state);
+    fn update_with_mouse_information(&self, gui: &Gui, offset: &Vector2, mouse_state: &MouseState) {
+        self.update_action(gui,offset,mouse_state);
     }
 }
 

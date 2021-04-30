@@ -27,7 +27,7 @@ pub trait WidgetSpecific {
     fn compute_child_content_size(&self, gui:&Gui, available_size:Size);
     fn compute_child_positions(&self, gui:&Gui);
 
-    fn update_action(&self, gui:&Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState);
+    fn update_action(&self, gui:&Gui, offset: &Vector2, mouse_state: &MouseState);
     fn render_my_visual(&self, gui:&Gui, d:&mut impl RaylibDraw, offset:&Vector2);
 
 }
@@ -40,7 +40,7 @@ pub trait LayoutableWidget {
 
 pub trait UpdatableWidget {
     /// update state (armed, hoover, clicked) with current mouse position and mouse button states
-    fn update_with_mouse_information(&self, gui:&Gui, offset:&Vector2, mouse_position: &Vector2, mouse_state: &MouseState);
+    fn update_with_mouse_information(&self, gui:&Gui, offset:&Vector2, mouse_state: &MouseState);
 }
 
 pub trait RenderableWidget {

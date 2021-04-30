@@ -193,9 +193,6 @@ fn main() {
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
 
-        let mouse_position = d.get_mouse_position();
-
-        mouse_state.update(&d,&mouse_position);
 
         if d.is_window_resized() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
@@ -207,8 +204,10 @@ fn main() {
         }
 
         {
-            gui.update_states(&mouse_position, &offset);
-            gui.handle_events(&mouse_position, &mouse_state, &offset);
+            mouse_state.update(&d);
+
+            gui.update_states(&mouse_state.mouse_position(), &offset);
+            gui.handle_events(&mouse_state, &offset);
             gui.layout(&screen_size);
 
             d.clear_background(Color::WHITE);

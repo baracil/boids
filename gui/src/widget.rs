@@ -84,13 +84,13 @@ impl LayoutableWidget for Widget {
 
 impl Widget {
 
-    pub fn update_action(&self, gui:&Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
+    pub fn update_action(&self, gui:&Gui, offset: &Vector2, mouse_state: &MouseState) {
         match self {
-            Widget::Label(p) => p.update_action(gui, offset,mouse_position,mouse_state),
-            Widget::Pane(p) => p.update_action(gui, offset,mouse_position,mouse_state),
-            Widget::VBox(p) => p.update_action(gui, offset,mouse_position,mouse_state),
-            Widget::HBox(p) => p.update_action(gui, offset,mouse_position,mouse_state),
-            Widget::Slider(p) => p.update_action(gui, offset,mouse_position,mouse_state),
+            Widget::Label(p) => p.update_action(gui, offset,mouse_state),
+            Widget::Pane(p) => p.update_action(gui, offset,mouse_state),
+            Widget::VBox(p) => p.update_action(gui, offset,mouse_state),
+            Widget::HBox(p) => p.update_action(gui, offset,mouse_state),
+            Widget::Slider(p) => p.update_action(gui, offset,mouse_state),
         }
     }
 

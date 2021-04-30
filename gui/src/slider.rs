@@ -150,10 +150,21 @@ impl WidgetSpecific for SliderPar {
     }
 
 
-    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
-        self.widget_data.wd_update_action(gui,offset,mouse_position,mouse_state);
+    fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_state: &MouseState) {
+        self.widget_data.wd_update_action(gui,offset,mouse_state);
 
         let drag_info = mouse_state.drag_info();
+
+        if mouse_state.right().is_pressed() {
+            let value = self.drag_value.get();
+            self.drag_in_progress.set(false);
+            self.invalidate_preferred_size(gui);
+            self.invalidate_position(gui);
+            if let Some(action_id) = self.action_id() {
+                gui.add_event(Drag(DragPar::cancelled(action_id, value)))
+            }
+
+        }
 
 
         if drag_info.started() {
@@ -198,7 +209,7 @@ impl WidgetSpecific for SliderPar {
             }
         }
 
-        self.widget_data.wd_update_action(gui,offset,mouse_position,mouse_state);
+        self.widget_data.wd_update_action(gui,offset,mouse_state);
     }
 
     fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {

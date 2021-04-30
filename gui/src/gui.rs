@@ -121,10 +121,10 @@ impl Gui {
         }
     }
 
-    pub fn handle_events(&self, mouse_position:&Vector2, mouse_state:&MouseState, offset:&Vector2) {
+    pub fn handle_events(&self, mouse_state:&MouseState, offset:&Vector2) {
         self.clear_events();
         if let Some(root) = self.get_root() {
-            root.update_action(self, offset,mouse_position,mouse_state)
+            root.update_action(self, offset,mouse_state)
         }
     }
 
