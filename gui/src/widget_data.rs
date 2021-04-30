@@ -288,7 +288,7 @@ impl WidgetData {
         let clickable = self.model.clickable.get();
         let hoovered = self.state.hoovered.get();
 
-        if mouse_state.left.is_released() && clickable && hoovered {
+        if mouse_state.left().is_released() && clickable && hoovered {
             let action_id = self.model.action_id.clone().into_inner();
             match (armed, action_id) {
                 (true, Some(action_id)) => {
@@ -298,11 +298,11 @@ impl WidgetData {
             }
         }
 
-        if mouse_state.left.is_pressed() && hoovered {
+        if mouse_state.left().is_pressed() && hoovered {
             armed = clickable;
         }
 
-        armed &= mouse_state.left.is_down();
+        armed &= mouse_state.left().is_down();
 
         self.state.armed.set(armed);
 

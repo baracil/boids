@@ -1,9 +1,9 @@
 use raylib::prelude::*;
 
 pub struct MouseState {
-    pub left: MouseButtonState,
-    pub middle: MouseButtonState,
-    pub right: MouseButtonState,
+    left: MouseButtonState,
+    middle: MouseButtonState,
+    right: MouseButtonState,
     drag_info: DragInfo,
 }
 
@@ -39,10 +39,6 @@ impl MouseState {
         }
     }
 
-    pub fn get_drag_info(&self) -> &DragInfo {
-        &self.drag_info
-    }
-
     pub fn update(&mut self, d:&RaylibDrawHandle, mouse_position:&Vector2) {
         self.left.update(d);
         self.middle.update(d);
@@ -51,6 +47,18 @@ impl MouseState {
         self.drag_info.update_drag_info(&self.left, mouse_position)
     }
 
+    pub fn left(&self) -> &MouseButtonState {
+        &self.left
+    }
+    pub fn middle(&self) -> &MouseButtonState {
+        &self.middle
+    }
+    pub fn right(&self) -> &MouseButtonState {
+        &self.right
+    }
+    pub fn drag_info(&self) -> &DragInfo {
+        &self.drag_info
+    }
 }
 
 impl Default for DragInfo {

@@ -205,11 +205,6 @@ fn main() {
             camera.zoom = 1.0;
         }
 
-        if mouse_state.get_drag_info().in_progress() {
-            println!("{:?}",mouse_state.get_drag_info())
-        }
-
-
         {
             let time = d.get_time() as f32;
             if let Slider(p) = vbox {
