@@ -165,17 +165,20 @@ fn main() {
             gui.add_child(_vbox2, Label(par))
         };
 
-        let _label3 = {
-            let par = LabelPar::new();
-            par.set_text(&gui, "3")
+        let _slide = {
+            let par = SliderPar::new();
+            par.set_value(&gui,0.0)
+                .set_value_min(&gui, -100.0)
+                .set_value_max(&gui, 100.0)
                 .set_padding(&gui, padding)
-                .set_action_id("Label3 b")
-                .set_clickable(true)
+                .set_action_id("Slider 3")
+                .set_clickable(false)
                 .enable_fill_height(&gui, Enabled { weight: 1 })
+                .enable_fill_width(&gui, Enabled { weight: 1 })
             ;
 
-            let label = Label(par);
-            gui.add_child(_vbox2, label)
+            let slider = Slider(par);
+            gui.add_child(_vbox2, slider)
         };
         _vbox2
     };
