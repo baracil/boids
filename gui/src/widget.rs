@@ -3,7 +3,7 @@
 
 use crate::label::LabelPar;
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetSpecific};
 use crate::pane::PanePar;
 use crate::gui::{Gui};
 use crate::vbox::VBoxPar;
@@ -12,6 +12,7 @@ use raylib::math::Vector2;
 use crate::hbox::HBoxPar;
 use crate::slider::SliderPar;
 use raylib::prelude::*;
+use std::ops::{Deref, DerefMut};
 
 pub enum  Widget {
     Label(LabelPar),
@@ -19,6 +20,32 @@ pub enum  Widget {
     VBox(VBoxPar),
     HBox(HBoxPar),
     Slider(SliderPar)
+}
+
+impl Deref for Widget {
+    type Target = WidgetData;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            Widget::Label(p) => p.get_widget_data(),
+            Widget::Pane(p) => p.get_widget_data(),
+            Widget::VBox(p) => p.get_widget_data(),
+            Widget::HBox(p) => p.get_widget_data(),
+            Widget::Slider(p) => p.get_widget_data(),
+        }
+    }
+}
+
+impl DerefMut for Widget {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        match self {
+            Widget::Label(p) => p.get_widget_data_mut(),
+            Widget::Pane(p) => p.get_widget_data_mut(),
+            Widget::VBox(p) => p.get_widget_data_mut(),
+            Widget::HBox(p) => p.get_widget_data_mut(),
+            Widget::Slider(p) => p.get_widget_data_mut(),
+        }
+    }
 }
 
 impl LayoutableWidget for Widget {
@@ -51,29 +78,7 @@ impl LayoutableWidget for Widget {
             Widget::Slider(p) => p.update_child_positions(gui),
         }
     }
-}
 
-impl WidgetDataProvider for Widget {
-
-    fn widget_data(&self) -> &WidgetData {
-        match &self {
-            Widget::Label(p) => p.widget_data(),
-            Widget::Pane(p) => p.widget_data(),
-            Widget::VBox(p) => p.widget_data(),
-            Widget::HBox(p) => p.widget_data(),
-            Widget::Slider(p) => p.widget_data(),
-        }
-    }
-
-    fn widget_data_mut(&mut self) -> &mut WidgetData {
-        match self {
-            Widget::Label(p) => p.widget_data_mut(),
-            Widget::Pane(p) => p.widget_data_mut(),
-            Widget::VBox(p) => p.widget_data_mut(),
-            Widget::HBox(p) => p.widget_data_mut(),
-            Widget::Slider(p) => p.widget_data_mut(),
-        }
-    }
 }
 
 impl RenderableWidget for Widget {

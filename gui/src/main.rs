@@ -3,8 +3,6 @@ use raylib::prelude::*;
 use gui::gui::Gui;
 
 
-use gui::widget_operation::{WidgetOp};
-
 use gui::alignment::VAlignment::{Top, Center};
 use gui::alignment::HAlignment::{Left, Middle};
 
@@ -174,7 +172,8 @@ fn main() {
                 .enable_fill_height(&gui, Enabled { weight: 1 })
             ;
 
-            gui.add_child(_vbox2, Label(par))
+            let label = Label(par);
+            gui.add_child(_vbox2, label)
         };
         _vbox2
     };

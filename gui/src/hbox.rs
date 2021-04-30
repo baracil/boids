@@ -1,14 +1,23 @@
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider, WidgetSpecific};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetSpecific};
 use crate::gui::{Gui};
 use crate::size::{Size};
 use std::cell::Cell;
 use crate::fill::Fill;
 use raylib::prelude::*;
+use std::ops::Deref;
 
 pub struct HBoxPar {
     widget_data: WidgetData,
     spacing: Cell<f32>,
+}
+
+impl Deref for HBoxPar {
+    type Target = WidgetData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.widget_data
+    }
 }
 
 impl HBoxPar {
@@ -21,7 +30,7 @@ impl HBoxPar {
             return self;
         }
         self.spacing.set(spacing);
-        self.widget_data.invalidate_preferred_size(gui);
+        self.invalidate_preferred_size(gui);
         self
     }
 
@@ -30,20 +39,18 @@ impl HBoxPar {
     }
 }
 
-impl WidgetDataProvider for HBoxPar {
-    fn widget_data(&self) -> &WidgetData {
+impl WidgetSpecific for HBoxPar {
+
+    fn get_widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
 
-    fn widget_data_mut(&mut self) -> &mut WidgetData {
+    fn get_widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
-}
-
-impl WidgetSpecific for HBoxPar {
 
     fn compute_size(&self, gui: &Gui) -> Size {
-        let tree_index = self.widget_data.tree_index;
+        let tree_index = self.get_tree_index();
         if tree_index.is_none() {
             return Size::empty();
         }
@@ -66,18 +73,18 @@ impl WidgetSpecific for HBoxPar {
         let spacing = self.spacing.get();
         summed_width += spacing * ((nb_children - 1).max(0) as f32);
 
-        let computed = Size::new( summed_width, max_height).with_padding(&self.widget_data().model.padding.get());
+        let computed = Size::new( summed_width, max_height).with_padding(&self.get_padding());
 
 
 
-        let mut preferred = self.widget_data.model.preferred_size.get();
+        let mut preferred = self.get_preferred_size();
         preferred.replace_empty_dimensions_and_max(&computed);
 
         return preferred.clone();
     }
 
     fn compute_child_content_size(&self, gui: &Gui, available_size: Size) {
-        let tree_index = self.widget_data.tree_index;
+        let tree_index = self.get_tree_index();
         if tree_index.is_none() {
             return;
         }
@@ -89,7 +96,7 @@ impl WidgetSpecific for HBoxPar {
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(child) = gui.get_widget(child_index) {
-                let fill = child.widget_data().fill_width();
+                let fill = child.fill_width();
                 nb_children+=1;
                 match fill {
                     Fill::Disabled => {
@@ -102,7 +109,7 @@ impl WidgetSpecific for HBoxPar {
             }
         }
 
-        let padding = self.widget_data.model.padding.get();
+        let padding = self.get_padding();
         let width = available_size.width() - padding.h_padding();
         let height= available_size.height() - padding.v_padding();
 
@@ -117,7 +124,7 @@ impl WidgetSpecific for HBoxPar {
         let mut size = Size::new(0.0,height);
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(child) = gui.get_widget(child_index) {
-                let fill = child.widget_data().fill_width();
+                let fill = child.fill_width();
                 match fill {
                     Fill::Disabled => {
                         let child_width = child.get_computed_size(gui).width();
@@ -135,14 +142,14 @@ impl WidgetSpecific for HBoxPar {
     }
 
     fn compute_child_positions(&self, gui: &Gui) {
-        let tree_index = self.widget_data.tree_index;
+        let tree_index = self.get_tree_index();
         if tree_index.is_none() {
             return;
         }
         let tree_index = tree_index.unwrap();
 
         let content_size = {
-            let content_layout = self.widget_data().geometry.content_layout.get();
+            let content_layout = self.get_content_layout();
             Size::new(content_layout.width, content_layout.height)
         };
 
@@ -152,42 +159,38 @@ impl WidgetSpecific for HBoxPar {
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
                 {
-                    let borrow_widget_size = w.widget_data().geometry.widget_size.borrow();
-                    position.y = (content_size.height() - borrow_widget_size.size().height())*0.5;
-                    w.widget_data().set_widget_target(&position);
+                    let widget_height = w.get_widget_height();
+                    position.y = (content_size.height() - widget_height)*0.5;
+                    w.set_widget_target(&position);
                     w.update_child_positions(gui);
                 }
-                let borrowed_widget_layout = w.widget_data().geometry.widget_layout.get();
 
-                position.x += borrowed_widget_layout.width + spacing;
+                position.x += w.get_widget_width() + spacing;
             }
         }
     }
 }
 
 impl RenderableWidget for HBoxPar {
+
     fn render(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
-        let tree_index = self.widget_data.tree_index;
+        let tree_index = self.get_tree_index();
         if tree_index.is_none() {
             return;
         }
         let tree_index = tree_index.unwrap();
 
-        self.widget_data.render_background_and_border(d, &offset);
+        self.render_background_and_border(d, &offset);
 
-        let content_layout = self.widget_data.geometry.content_layout.get();
+        let content_layout = self.get_content_layout();
         let mut target = offset.clone();
         target.x += content_layout.x;
         target.y += content_layout.y;
 
-
-
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
-                w.render(gui,d,&target);
+                w.render(gui, d, &target)
             }
         }
-
     }
-
 }

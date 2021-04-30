@@ -11,7 +11,7 @@ use crate::font::FontInfo;
 use crate::size::Size;
 use crate::text_style::TextStyle;
 use crate::widget::Widget;
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetDataProvider};
+use crate::widget_operation::{RenderableWidget, LayoutableWidget};
 use crate::mouse::MouseState;
 use crate::widget_operation::UpdatableWidget;
 use crate::event::Event;
@@ -144,7 +144,7 @@ impl Gui {
     fn update_styles(&self, root_index: Index) {
         self.tree.descendants(root_index).for_each(|idx| {
             if let Some(w) = self.tree.get(idx) {
-                w.widget_data().update_style(self)
+                w.update_style(self)
             }
         })
     }
@@ -162,7 +162,7 @@ impl Gui {
 
     fn update_widget_positions(&self, root_index: Index, available_space: &Size) {
         let root = self.get_widget(root_index).unwrap();
-        root.widget_data().compute_default_target(available_space);
+        root.compute_default_target(available_space);
         root.update_child_positions(&self);
     }
     pub fn render(&self, d: &mut impl RaylibDraw, position: &Vector2) {
@@ -195,12 +195,12 @@ impl Gui {
         let root_index = self.tree.insert_root(root);
         self.tree.get_mut(root_index)
             .unwrap()
-            .widget_data_mut().tree_index = Some(root_index);
+            .tree_index = Some(root_index);
         root_index
     }
     pub fn add_child(&mut self, parent: Index, child: Widget) -> Index {
         let child_index = self.tree.insert(child, parent);
-        self.tree.get_mut(child_index).unwrap().widget_data_mut().tree_index = Some(child_index);
+        self.tree.get_mut(child_index).unwrap().tree_index = Some(child_index);
         child_index
     }
 }

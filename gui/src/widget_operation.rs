@@ -20,52 +20,9 @@ bitflags! {
     }
 }
 
-pub trait WidgetOp {
-
-    fn set_text_style(&self, text_style_name:&str) -> &dyn WidgetOp;
-    fn set_background_style(&self, background_style_name:&str) -> &dyn WidgetOp;
-    fn set_border_style(&self, background_style_name:&str) -> &dyn WidgetOp;
-
-    fn set_action_id(&self, action_id:&str) -> &dyn WidgetOp;
-    fn clear_action_id(&self) -> &dyn WidgetOp;
-    fn set_clickable(&self,clickable:bool) -> &dyn WidgetOp;
-    /// set the position of this node
-    fn set_position_vec(&self,gui:&Gui, point: &Position, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
-        self.set_position(gui,point.get_x(),point.get_y());
-        self.set_valignment(gui,valignment);
-        self.set_halignment(gui,halignment)
-    }
-
-    fn set_position_ex(&self,gui:&Gui, x: &Coordinate, y: &Coordinate, valignment: VAlignment, halignment: HAlignment) -> &dyn WidgetOp  {
-        self.set_position(gui,x,y);
-        self.set_valignment(gui,valignment);
-        self.set_halignment(gui,halignment)
-    }
-
-    fn set_position(&self,gui:&Gui, x: &Coordinate, y: &Coordinate)  -> &dyn WidgetOp;
-
-    fn set_valignment(&self,gui:&Gui, valignment: VAlignment)  -> &dyn WidgetOp;
-    fn set_halignment(&self,gui:&Gui, halignment: HAlignment)  -> &dyn WidgetOp;
-
-    fn set_padding(&self,gui:&Gui, padding: Padding)  -> &dyn WidgetOp;
-
-    fn clear_preferred_size(&self,gui:&Gui)  -> &dyn WidgetOp {
-        self.set_preferred_size(gui,Size::empty())
-    }
-
-    fn set_preferred_height(&self,gui:&Gui, height: f32)  -> &dyn WidgetOp;
-    fn set_preferred_width(&self,gui:&Gui, width: f32)  -> &dyn WidgetOp;
-    fn set_preferred_size(&self,gui:&Gui, size: Size)  -> &dyn WidgetOp;
-
-    fn disable_fill_width(&self,gui:&Gui) -> &dyn WidgetOp;
-    fn disable_fill_height(&self,gui:&Gui) -> &dyn WidgetOp;
-
-    fn enable_fill_width(&self,gui:&Gui, fill:Fill) -> &dyn WidgetOp;
-    fn enable_fill_height(&self,gui:&Gui, fill:Fill) -> &dyn WidgetOp;
-
-}
-
 pub trait WidgetSpecific {
+    fn get_widget_data(&self) -> &WidgetData;
+    fn get_widget_data_mut(&mut self) -> &mut WidgetData;
     fn compute_size(&self, gui:&Gui) -> Size;
     fn compute_child_content_size(&self, gui:&Gui, available_size:Size);
     fn compute_child_positions(&self, gui:&Gui);
@@ -87,7 +44,3 @@ pub trait RenderableWidget {
     fn render(&self, gui:&Gui, d: &mut impl RaylibDraw, offset:&Vector2);
 }
 
-pub trait WidgetDataProvider {
-    fn widget_data(&self) -> &WidgetData;
-    fn widget_data_mut(&mut self) -> &mut WidgetData;
-}

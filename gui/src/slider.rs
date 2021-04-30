@@ -1,9 +1,10 @@
 use std::cell::{Cell, RefCell};
 use crate::widget_data::WidgetData;
 use crate::gui::Gui;
-use crate::widget_operation::{WidgetDataProvider, WidgetSpecific, RenderableWidget};
+use crate::widget_operation::{WidgetSpecific, RenderableWidget};
 use crate::size::Size;
 use raylib::prelude::*;
+use std::ops::Deref;
 
 pub struct SliderPar {
     widget_data: WidgetData,
@@ -14,6 +15,13 @@ pub struct SliderPar {
     value_text_size: Cell<Size>,
 }
 
+impl Deref for SliderPar {
+    type Target = WidgetData;
+
+    fn deref(&self) -> &Self::Target {
+        &self.widget_data
+    }
+}
 
 const SLIDER_BAR_HEIGHT: f32 = 20.0;
 const SLIDER_BAR_WIDTH: f32 = 100.0;
@@ -53,19 +61,19 @@ impl SliderPar {
 
     pub fn set_value(&self, gui: &Gui, value: f32) -> &SliderPar {
         self.value.set(value);
-        self.widget_data.invalidate_preferred_size(gui);
+        self.invalidate_preferred_size(gui);
         self
     }
 
     pub fn set_value_min(&self, gui: &Gui, value: f32) -> &SliderPar {
         self.value_min.set(value);
-        self.widget_data.invalidate_preferred_size(gui);
+        self.invalidate_preferred_size(gui);
         self
     }
 
     pub fn set_value_max(&self, gui: &Gui, value: f32) -> &SliderPar {
         self.value_max.set(value);
-        self.widget_data.invalidate_preferred_size(gui);
+        self.invalidate_preferred_size(gui);
         self
     }
 
@@ -75,35 +83,40 @@ impl SliderPar {
     }
 
     fn measure_value(&self, formatted_value: &str) -> Size {
-        let borrowed_text_style = &self.widget_data.state.text_style.borrow();
-
-        match borrowed_text_style.as_ref() {
+        match self.get_text_style() {
             None => Size::empty(),
-            Some(ts) => {
-                ts.measure_text(formatted_value)
-            }
+            Some(ts) => ts.measure_text(formatted_value)
         }
     }
 }
 
-impl WidgetDataProvider for SliderPar {
-    fn widget_data(&self) -> &WidgetData {
+// impl WidgetDataProvider for SliderPar {
+//     fn widget_data(&self) -> &WidgetData {
+//         &self.widget_data
+//     }
+//
+//     fn widget_data_mut(&mut self) -> &mut WidgetData {
+//         &mut self.widget_data
+//     }
+// }
+
+impl WidgetSpecific for SliderPar {
+
+    fn get_widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
 
-    fn widget_data_mut(&mut self) -> &mut WidgetData {
+    fn get_widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
-}
 
-impl WidgetSpecific for SliderPar {
     fn compute_size(&self, _gui: &Gui) -> Size {
         let formatted_value = self.format_value(self.value.get());
         let text_size = self.measure_value(&formatted_value);
         self.value_text.replace(formatted_value);
         self.value_text_size.set(text_size);
         let bar_size = Size::new(SLIDER_BAR_WIDTH, SLIDER_BAR_HEIGHT);
-        return text_size.max(&bar_size).with_padding(&self.widget_data.model.padding.get());
+        return text_size.max(&bar_size).with_padding(&self.get_padding());
     }
 
     fn compute_child_content_size(&self, _gui: &Gui, _available_size: Size) {}
@@ -113,9 +126,9 @@ impl WidgetSpecific for SliderPar {
 
 impl RenderableWidget for SliderPar {
     fn render(&self, _gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
-        self.widget_data.render_background_and_border(d, offset);
+        self.render_background_and_border(d, offset);
 
-        let mut content_layout = self.widget_data.geometry.content_layout.get();
+        let mut content_layout = self.get_content_layout();
 
         content_layout.x += offset.x;
         content_layout.y += offset.y;
@@ -138,8 +151,7 @@ impl RenderableWidget for SliderPar {
         }
 
         {
-            let borrowed_text_style = &self.widget_data.state.text_style.borrow();
-            if let Some(ts) = borrowed_text_style.as_ref() {
+            if let Some(ts) = self.get_text_style() {
                 let text_size = self.value_text_size.get();
                 let mut position = Vector2::new(content_layout.x, content_layout.y);
                 position.x += (content_layout.width - text_size.width())*0.5;
