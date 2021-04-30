@@ -21,6 +21,7 @@ pub struct WidgetModel {
 
     pub focusable: Cell<bool>,
     pub clickable: Cell<bool>,
+    pub hooverable: Cell<bool>,
     pub disable: Cell<bool>,
 
     pub padding: Cell<Padding>,
@@ -44,6 +45,7 @@ impl WidgetModel {
             border_style_name: RefCell::new("default".to_string()),
             alignment: Cell::new(Default::default()),
             focusable: Cell::new(false),
+            hooverable: Cell::new(false),
             clickable: Cell::new(false),
             disable: Cell::new(false),
             padding: Cell::new(Padding::none()),

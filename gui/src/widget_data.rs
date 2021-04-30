@@ -259,9 +259,11 @@ impl WidgetData {
         abs_widget_layout.x += offset.x;
         abs_widget_layout.y += offset.y;
 
+        let hooverable = self.is_hooverable();
+
         let new_hoovered = abs_widget_layout.check_collision_point_rec(mouse_position);
         let old_hoovered = self.state.hoovered.get();
-        self.state.hoovered.set(new_hoovered);
+        self.state.hoovered.set(new_hoovered && hooverable);
         let mut child_hoovered = false;
 
         match (self.tree_index, old_hoovered, new_hoovered) {
@@ -469,6 +471,16 @@ impl WidgetData {
         self.model.clickable.set(clickable);
         self
     }
+
+    pub fn is_hooverable(&self) -> bool {
+        self.model.hooverable.get()
+    }
+
+    pub fn set_hooverable(&self, hooverable:bool) -> &WidgetData {
+        self.model.hooverable.set(hooverable);
+        self
+    }
+
     pub fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &WidgetData {
         let mut current_position = self.model.position.get();
         if current_position.get_x().eq(&x) && current_position.get_y().eq(&y) {

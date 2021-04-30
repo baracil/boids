@@ -35,11 +35,13 @@ impl Deref for LabelPar {
 
 impl LabelPar {
     pub fn new() -> Self {
-        Self {
+        let labelPar = Self {
             widget_data: WidgetData::new(),
             text: RefCell::new(None),
             text_size: Cell::new(Size::empty())
-        }
+        };
+        labelPar.set_hooverable(true);
+        labelPar
     }
 
     pub fn clear_text(&self, gui: &Gui) -> &LabelPar {
