@@ -19,6 +19,7 @@ use gui::fill::Fill::Enabled;
 use gui::hbox::HBoxPar;
 use gui::slider::SliderPar;
 use std::f32::consts::PI;
+use gui::mouse::MouseState;
 
 fn main() {
     let (mut rl, thread) = raylib::init()
@@ -186,9 +187,14 @@ fn main() {
     let vbox = gui.get_widget(_slider).unwrap();
 
     let mut camera = Camera2D::default();
+    let mut mouse_state = MouseState::new();
 
     while !rl.window_should_close() {
         let mut d = rl.begin_drawing(&thread);
+
+        let mouse_position = d.get_mouse_position();
+
+        mouse_state.update(&d,&mouse_position);
 
         if d.is_window_resized() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
@@ -199,6 +205,10 @@ fn main() {
             camera.zoom = 1.0;
         }
 
+        if mouse_state.get_drag_info().in_progress() {
+            println!("{:?}",mouse_state.get_drag_info())
+        }
+
 
         {
             let time = d.get_time() as f32;
@@ -207,9 +217,9 @@ fn main() {
                 p.set_value(&gui, value);
             }
 
-            let mouse_position = d.get_mouse_position();
 
-            gui.update_states(&d, mouse_position, &offset);
+            gui.update_states(&mouse_position, &offset);
+            gui.handle_events(&mouse_position, &mouse_state, &offset);
             gui.layout(&screen_size);
 
             d.clear_background(Color::WHITE);

@@ -24,15 +24,6 @@ impl Deref for LabelPar {
     }
 }
 
-// impl WidgetDataProvider for LabelPar {
-//     fn widget_data(&self) -> &WidgetData {
-//         &self.widget_data
-//     }
-//     fn widget_data_mut(&mut self) -> &mut WidgetData {
-//         &mut self.widget_data
-//     }
-// }
-
 impl LabelPar {
     pub fn new() -> Self {
         let labelPar = Self {

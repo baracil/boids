@@ -254,32 +254,32 @@ impl WidgetData {
         self.invalidate_preferred_size(gui)
     }
 
-    pub fn update_hoovered(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) -> bool {
-        let mut abs_widget_layout = self.geometry.widget_layout.get();
+    pub fn update_hoovered(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2) -> bool {
+        let mut abs_widget_layout = self.get_widget_layout();
         abs_widget_layout.x += offset.x;
         abs_widget_layout.y += offset.y;
 
         let hooverable = self.is_hooverable();
 
         let new_hoovered = abs_widget_layout.check_collision_point_rec(mouse_position);
-        let old_hoovered = self.state.hoovered.get();
-        self.state.hoovered.set(new_hoovered && hooverable);
+        let old_hoovered = self.get_hoover_state();
+        self.set_hoover_state(new_hoovered && hooverable);
         let mut child_hoovered = false;
 
         match (self.tree_index, old_hoovered, new_hoovered) {
             (_, false, false) | (None, _, _) => {}
 
             (Some(idx), _, _) => {
-                let padding = self.model.padding.get();
+                let padding = self.get_padding();
                 let child_offset = Vector2::new(abs_widget_layout.x+padding.left, abs_widget_layout.y+padding.top);
                 for child_index in gui.get_widget_children(idx) {
                     if let Some(w) = gui.get_widget(child_index) {
-                        child_hoovered |= w.update_hoovered(gui, &child_offset, mouse_position, mouse_state)
+                        child_hoovered |= w.update_hoovered(gui, &child_offset, mouse_position)
                     }
                 }
             }
         }
-        self.state.child_hoovered.set(child_hoovered);
+        self.set_child_hoovered_state(child_hoovered);
         new_hoovered
     }
 
@@ -288,7 +288,7 @@ impl WidgetData {
         let clickable = self.model.clickable.get();
         let hoovered = self.state.hoovered.get();
 
-        if mouse_state.left.released && clickable && hoovered {
+        if mouse_state.left.is_released() && clickable && hoovered {
             let action_id = self.model.action_id.clone().into_inner();
             match (armed, action_id) {
                 (true, Some(action_id)) => {
@@ -298,11 +298,11 @@ impl WidgetData {
             }
         }
 
-        if mouse_state.left.pressed && hoovered {
+        if mouse_state.left.is_pressed() && hoovered {
             armed = clickable;
         }
 
-        armed &= mouse_state.left.down;
+        armed &= mouse_state.left.is_down();
 
         self.state.armed.set(armed);
 
@@ -385,7 +385,6 @@ impl WidgetData {
 
 impl UpdatableWidget for Widget {
     fn update_with_mouse_information(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2, mouse_state: &MouseState) {
-        self.update_hoovered(gui, offset, mouse_position, mouse_state);
         self.update_action(gui,offset,mouse_position,mouse_state);
     }
 }
@@ -480,6 +479,26 @@ impl WidgetData {
         self.model.hooverable.set(hooverable);
         self
     }
+
+    pub fn get_hoover_state(&self) -> bool {
+        self.state.hoovered.get()
+    }
+
+    pub fn set_hoover_state(&self, hoovered:bool) -> &WidgetData {
+        self.state.hoovered.set(hoovered);
+        self
+    }
+
+    pub fn set_child_hoovered_state(&self, hoovered:bool) -> &WidgetData {
+        self.state.child_hoovered.set(hoovered);
+        self
+    }
+
+    pub fn get_child_hoovered_state(&self) -> bool {
+        self.state.child_hoovered.get()
+    }
+
+
 
     pub fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &WidgetData {
         let mut current_position = self.model.position.get();

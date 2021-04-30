@@ -115,19 +115,19 @@ impl Gui {
     }
 
 
-    pub fn update_states(&self, d: &RaylibDrawHandle<'_>, mouse_position:Vector2, offset:&Vector2) {
-        self.clear_events();
-        let option_root = self.tree.get_root_index().map(|idx| {self.tree.get(idx).unwrap()});
-        if option_root.is_none() {
-            return;
+    pub fn update_states(&self, mouse_position:&Vector2, offset:&Vector2) {
+        if let Some(root) = self.get_root() {
+            root.update_hoovered(self, offset, &mouse_position);
         }
-
-        let mouse_state = MouseState::new(d);
-
-        let root = option_root.unwrap();
-
-        root.update_with_mouse_information(self, offset, &mouse_position,&mouse_state)
     }
+
+    pub fn handle_events(&self, mouse_position:&Vector2, mouse_state:&MouseState, offset:&Vector2) {
+        self.clear_events();
+        if let Some(root) = self.get_root() {
+            root.update_action(self, offset,mouse_position,mouse_state)
+        }
+    }
+
 
     pub fn layout(&self, available_size: &Size) {
         let option_root = self.tree.get_root_index();
@@ -166,8 +166,7 @@ impl Gui {
         root.update_child_positions(&self);
     }
     pub fn render(&self, d: &mut impl RaylibDraw, position: &Vector2) {
-        if let Some(idx) = self.tree.get_root_index() {
-            let root = self.tree.get(idx).unwrap();
+        if let Some(root) = self.get_root() {
             root.render(&self, d, position)
         }
     }
@@ -175,6 +174,11 @@ impl Gui {
 
 /// tree management
 impl Gui {
+
+    pub fn get_root(&self) -> Option<&Widget> {
+        self.tree.get_root_index().map(|idx| {self.tree.get(idx).unwrap()})
+    }
+
     pub fn get_parent(&self, node_id: Index) -> Option<Index> {
         self.tree.parent(node_id)
     }
