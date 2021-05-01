@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 #[derive(Copy, Clone)]
 pub struct Vector {
     pub x: f32,
@@ -34,7 +36,18 @@ impl Vector {
         self.y *= scale;
     }
 
+    pub fn norm(&self) -> f32 {
+        self.x.powi(2) + self.y.powi(2)
+    }
+
     pub fn hypot(&self) -> f32 {
         self.x.hypot(self.y)
     }
+
+    pub fn set_random(&mut self, norm:f32) {
+        let angle: f32 = rand::random::<f32>() * PI * 2.0;
+        self.x = norm * angle.cos();
+        self.y = norm * angle.sin();
+    }
+
 }

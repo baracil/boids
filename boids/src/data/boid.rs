@@ -34,8 +34,7 @@ impl Boid {
 
         if self.speed <= 1e-6 {
             let v: f32 = rand::random::<f32>() * PI * 2.0;
-            self.velocity.x = min_speed * v.cos();
-            self.velocity.y = min_speed * v.sin();
+            self.velocity.set_random(min_speed);
             self.speed = min_speed;
         } else if self.speed < min_speed {
             self.velocity.scale(min_speed / self.speed);
@@ -45,4 +44,5 @@ impl Boid {
     pub fn speed(&self) -> f32 {
         self.speed
     }
+
 }

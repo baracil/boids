@@ -6,11 +6,11 @@ use crate::data::vector::Vector;
 
 const CONSTRAINT_STRENGTH: f32 = 0.1;
 
-const DEAD_ANGLE: f32 = 20.0;
-// in degree
 const SAFE_SPACE_RATIO: f32 = 0.8;
 const DEFAULT_VISIBILITY_FACTOR: f32 = 3.0;
 
+// in degree
+const DEAD_ANGLE: f32 = 20.0;
 const DEFAULT_SEPARATION_FACTOR: f32 = 6.0;
 const DEFAULT_COHESION_FACTOR: f32 = 4.0;
 const DEFAULT_ALIGNMENT_FACTOR: f32 = 10.;
@@ -29,6 +29,7 @@ pub struct Parameters {
     pub min_bird_speed: f32,
     pub max_bird_speed: f32,
     pub visibility_radius: f32,
+    pub safe_space_ratio: f32,
     dead_angle: f32,
     cos_max_angle: f32,
     pub separation_factor: f32,
@@ -46,6 +47,7 @@ impl Parameters {
         Parameters {
             bird_size: DEFAULT_BIRD_SIZE,
             visibility_radius: DEFAULT_BIRD_SIZE * DEFAULT_VISIBILITY_FACTOR,
+            safe_space_ratio: SAFE_SPACE_RATIO,
             dead_angle: DEAD_ANGLE,
             cos_max_angle: compute_cos_max_angle(DEAD_ANGLE),
             cohesion_factor: DEFAULT_COHESION_FACTOR * 0.01,
@@ -168,6 +170,10 @@ impl World {
         for boid in self.current.iter() {
             let visibility = self.compute_separation(reference, *boid, &mut buffer);
             if (visibility & IN_SAFE_SPACE) != 0 {
+                let norm2 = buffer.norm();
+                if norm2<DEFAULT_BIRD_SIZE*0.1 {
+                    buffer.set_random(DEFAULT_BIRD_MIN_SPEED)
+                }
                 nb_in_safe_space += 1;
                 steering.separation.add(&buffer);
             }
@@ -212,7 +218,7 @@ impl World {
             return NOT_VISIBLE;
         }
 
-        if distance < visibility_radius * SAFE_SPACE_RATIO {
+        if distance < visibility_radius * self.parameters.safe_space_ratio {
             return IN_SAFE_SPACE | VISIBLE;
         }
 

@@ -35,6 +35,7 @@ pub struct ScreenSize {
 const COHESION_ID: &str = "cohesion_id";
 const SEPARATION_ID: &str = "separation_id";
 const DEAD_ANGLE_ID: &str = "dead_angle_id";
+const SAFE_SPACE_RATIO_ID: &str = "safe_space_ratio_id";
 const ALIGNMENT_ID: &str = "alignment_id";
 
 fn draw_birds(d: &mut impl RaylibDraw, boids: &[Boid], bird_size: f32) {
@@ -143,8 +144,6 @@ fn main() {
             .set_border_style("none")
             .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
-    }
-    {
         let par = SliderPar::new();
         par.set_value(&gui, 100.0 * app_state.world.parameters.alignment_factor)
             .set_value_min(&gui, 0.0)
@@ -165,8 +164,6 @@ fn main() {
             .set_padding(&gui, Padding::new(40.0, 0.0, 0.0, 0.0))
             .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
-    }
-    {
         let par = SliderPar::new();
         par.set_value(&gui, 100.0 * app_state.world.parameters.cohesion_factor)
             .set_value_min(&gui, 0.0)
@@ -187,8 +184,6 @@ fn main() {
             .set_padding(&gui, Padding::new(40.0, 0.0, 0.0, 0.0))
             .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
-    }
-    {
         let par = SliderPar::new();
         par.set_value(&gui, 100.0 * app_state.world.parameters.separation_factor)
             .set_value_min(&gui, 0.0)
@@ -209,14 +204,32 @@ fn main() {
             .set_padding(&gui, Padding::new(40.0, 0.0, 0.0, 0.0))
             .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
-    }
-    {
         let par = SliderPar::new();
         par.set_value(&gui, app_state.world.parameters.dead_angle())
             .set_value_min(&gui, 0.0)
             .set_value_max(&gui, 180.0)
             .set_text_style("default")
             .set_action_id(DEAD_ANGLE_ID)
+            .set_text_style("default")
+            .enable_fill_width(&gui, Enabled { weight: 1 });
+
+        gui.add_child(container, Slider(par));
+    }
+
+    {
+        let par = LabelPar::new();
+        par.set_text(&gui, "Safe Space Ratio")
+            .set_text_style("default")
+            .set_border_style("none")
+            .set_padding(&gui, Padding::new(40.0, 0.0, 0.0, 0.0))
+            .enable_fill_width(&gui, Enabled { weight: 1 });
+        gui.add_child(container, Label(par));
+        let par = SliderPar::new();
+        par.set_value(&gui, app_state.world.parameters.safe_space_ratio*100.0)
+            .set_value_min(&gui, 0.0)
+            .set_value_max(&gui, 100.0)
+            .set_text_style("default")
+            .set_action_id(SAFE_SPACE_RATIO_ID)
             .set_text_style("default")
             .enable_fill_width(&gui, Enabled { weight: 1 });
 
@@ -280,6 +293,7 @@ fn main() {
                     ALIGNMENT_ID => { app_state.world.parameters.alignment_factor = p.value() / 100. }
                     SEPARATION_ID => { app_state.world.parameters.separation_factor = p.value() / 100. }
                     DEAD_ANGLE_ID => { app_state.world.parameters.set_dead_angle(p.value()) }
+                    SAFE_SPACE_RATIO_ID => { app_state.world.parameters.safe_space_ratio = p.value()*0.01 }
                     &_ => {}
                 }
             }
