@@ -15,7 +15,7 @@ use crate::size::Size;
 use crate::widget::Widget;
 use crate::widget_geometry::WidgetGeometry;
 use crate::widget_model::WidgetModel;
-use crate::widget_operation::{DirtyFlags, UpdatableWidget, LayoutableWidget, WidgetSpecific, RenderableWidget};
+use crate::widget_operation::{DirtyFlags, LayoutableWidget, WidgetSpecific};
 use crate::widget_state::WidgetState;
 use crate::background::BackgroundRenderer;
 use crate::border::BorderRenderer;
@@ -35,7 +35,7 @@ pub struct WidgetData {
 
 impl WidgetData {
     pub(crate) fn render_background_and_border(&self, d: &mut impl RaylibDraw, offset: &Vector2) {
-        let mut chrome_layout = self.geometry.widget_layout.to_owned().into_inner();
+        let mut chrome_layout = self.widget_layout();
         chrome_layout.x += offset.x;
         chrome_layout.y += offset.y;
         {
@@ -69,6 +69,199 @@ impl WidgetData {
     }
 }
 
+
+///mode private
+impl WidgetData {
+
+    fn disable_fill(&self, gui: &Gui, fill: &Cell<Fill>) {
+        if fill.get().is_disabled() {
+            return;
+        }
+        fill.set(Disabled);
+        self.invalidate_preferred_size(gui)
+    }
+
+    fn enable_fill(&self, gui: &Gui, fill_cell: &Cell<Fill>, fill: Fill) {
+        let current_fill = fill_cell.get();
+        if current_fill.eq(&fill) {
+            return;
+        }
+
+        fill_cell.set(fill);
+        self.invalidate_preferred_size(gui)
+    }
+
+
+}
+
+///model public
+impl WidgetData {
+    pub fn action_id<>(&self) -> Option<String> {
+        let borrowed = self.model.action_id.borrow();
+
+        match borrowed.as_ref() {
+            None => None,
+            Some(r) => Some(r.to_owned())
+        }
+    }
+    pub fn set_action_id(&self, action_id: &str) -> &WidgetData {
+        self.model.action_id.replace(Some(action_id.to_string()));
+        self
+    }
+    pub fn clear_action_id(&self) -> &WidgetData {
+        self.model.action_id.replace(None);
+        self
+    }
+
+    pub fn preferred_size(&self) -> Size {
+        self.model.preferred_size.get()
+    }
+    pub fn set_preferred_height(&self, gui: &Gui, height: f32) -> &WidgetData {
+        let size = self.model.preferred_size.get().with_height(height);
+        self.set_preferred_size(gui, size);
+        self
+    }
+    pub fn set_preferred_width(&self, gui: &Gui, width: f32) -> &WidgetData {
+        let size = self.model.preferred_size.get().with_width(width);
+        self.set_preferred_size(gui, size);
+        self
+    }
+    pub fn set_preferred_size(&self, gui: &Gui, size: Size) -> &WidgetData {
+        let current = self.model.preferred_size.get();
+        if current.eq(&size) {
+            return self;
+        }
+        self.model.preferred_size.set(size);
+        self.invalidate_preferred_size(gui);
+        self
+    }
+
+    pub fn padding(&self) -> Padding {
+        self.model.padding.get()
+    }
+    pub fn set_padding(&self, gui: &Gui, padding: Padding) -> &WidgetData {
+        let current_padding = self.model.padding.get();
+        if current_padding.eq(&padding) {
+            return self;
+        }
+        self.model.padding.set(padding);
+        self.invalidate_preferred_size(gui);
+        self
+    }
+
+    pub fn fill_height_enabled(&self) -> bool {
+        self.model.fill_height.get().is_enabled()
+    }
+    pub fn fill_width_enabled(&self) -> bool {
+        self.model.fill_width.get().is_enabled()
+    }
+    pub fn fill_width(&self) -> Fill {
+        self.model.fill_width.get()
+    }
+    pub fn fill_height(&self) -> Fill {
+        self.model.fill_height.get()
+    }
+    pub fn disable_fill_width(&self, gui: &Gui) -> &WidgetData {
+        self.disable_fill(gui, &self.model.fill_width);
+        self
+    }
+    pub fn disable_fill_height(&self, gui: &Gui) -> &WidgetData {
+        self.disable_fill(gui, &self.model.fill_height);
+        self
+    }
+    pub fn enable_fill_width(&self, gui: &Gui, fill: Fill) -> &WidgetData {
+        self.enable_fill(gui, &self.model.fill_width, fill);
+        self
+    }
+    pub fn enable_fill_height(&self, gui: &Gui, fill: Fill) -> &WidgetData {
+        self.enable_fill(gui, &self.model.fill_height, fill);
+        self
+    }
+
+    pub fn set_text_style(&self, text_style_name: &str) -> &WidgetData {
+        self.model.text_style_name.replace(text_style_name.to_string());
+        self.invalidate_style();
+        self
+    }
+    pub fn set_background_style(&self, background_style_name: &str) -> &WidgetData {
+        self.model.back_style_name.replace(background_style_name.to_string());
+        self.invalidate_style();
+        self
+    }
+    pub fn set_border_style(&self, border_style: &str) -> &WidgetData {
+        self.model.border_style_name.replace(border_style.to_string());
+        self.invalidate_style();
+        self
+    }
+
+    pub fn position(&self) -> Position {
+        self.model.position.get()
+    }
+    pub fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &WidgetData {
+        let mut current_position = self.model.position.get();
+        if current_position.get_x().eq(&x) && current_position.get_y().eq(&y) {
+            return self;
+        }
+        current_position.set_x(x);
+        current_position.set_y(y);
+        self.model.position.set(current_position);
+        self.invalidate_position(gui);
+        self
+    }
+    pub fn set_valignment(&self, gui: &Gui, valignment: VAlignment) -> &WidgetData {
+        let current_alignment = self.model.alignment.get();
+        self.set_alignment(gui, valignment, current_alignment.horizontal);
+        self
+    }
+    pub fn set_halignment(&self, gui: &Gui, halignment: HAlignment) -> &WidgetData {
+        let current_alignment = self.model.alignment.get();
+        self.set_alignment(gui, current_alignment.vertical, halignment);
+        self
+    }
+    pub fn set_alignment(&self, gui: &Gui, valignment: VAlignment, haligment: HAlignment) -> &WidgetData{
+        let mut current_alignment = self.model.alignment.get();
+        if current_alignment.vertical.eq(&valignment) && current_alignment.horizontal.eq(&haligment) {
+            return self;
+        }
+        current_alignment.vertical = valignment;
+        current_alignment.horizontal = haligment;
+        self.model.alignment.set(current_alignment);
+        self.invalidate_position(gui);
+        self
+    }
+
+    pub fn set_clickable(&self, clickable: bool) -> &WidgetData {
+        self.model.clickable.set(clickable);
+        self
+    }
+    pub fn hooverable(&self) -> bool {
+        self.model.hooverable.get()
+    }
+    pub fn set_hooverable(&self, hooverable:bool) -> &WidgetData {
+        self.model.hooverable.set(hooverable);
+        self
+    }
+
+}
+
+/// geometry
+impl WidgetData {
+    pub fn widget_layout(&self) -> Rectangle {
+        self.geometry.widget_layout.get()
+    }
+    pub fn widget_height(&self) -> f32 {
+        self.geometry.widget_size.borrow().size().height()
+    }
+    pub fn widget_width(&self) -> f32 {
+        self.geometry.widget_size.borrow().size().width()
+    }
+
+    pub fn content_layout(&self) -> Rectangle {
+        self.geometry.content_layout.get()
+    }
+
+}
+
 impl WidgetData {
 
     pub fn get_tree_index(&self) -> Option<Index> {
@@ -84,27 +277,9 @@ impl WidgetData {
         }
     }
 
-    pub fn get_widget_layout(&self) -> Rectangle {
-        self.geometry.widget_layout.get()
-    }
 
-    pub fn widget_height(&self) -> f32 {
-        self.geometry.widget_size.borrow().size().height()
-    }
 
-    pub fn get_widget_width(&self) -> f32 {
-        self.geometry.widget_size.borrow().size().width()
-    }
-
-    pub fn content_layout(&self) -> Rectangle {
-        self.geometry.content_layout.get()
-    }
-
-    pub fn get_preferred_size(&self) -> Size {
-        self.model.preferred_size.get()
-    }
-
-    pub fn get_text_style(&self) -> Option<Rc<TextStyle>> {
+    pub fn text_style(&self) -> Option<Rc<TextStyle>> {
         let borrowed_text_style = self.state.text_style.borrow();
         match borrowed_text_style.as_ref() {
             None => None,
@@ -112,55 +287,6 @@ impl WidgetData {
         }
     }
 
-    pub fn get_position(&self) -> Position {
-        self.model.position.get()
-    }
-
-    pub fn padding(&self) -> Padding {
-        self.model.padding.get()
-    }
-
-    pub fn compute_target(position: f32, absolute: bool, available: f32) -> f32 {
-        if absolute {
-            return position;
-        }
-        position * 0.01 * available
-    }
-
-    pub fn is_relative_coordinate_y(&self) -> bool {
-        self.model.position.get().is_y_relative()
-    }
-
-    pub fn is_relative_coordinate_x(&self) -> bool {
-        self.model.position.get().is_x_relative()
-    }
-
-
-    pub fn invalidate_style(&self) {
-        self.set_dirty_flag(DirtyFlags::STYLE)
-    }
-
-    pub fn invalidate_preferred_size(&self, gui: &Gui) {
-        self.invalidate_flag(gui, DirtyFlags::PREFERRED_SIZE);
-    }
-
-    pub fn invalidate_content_size(&self, gui: &Gui) {
-        self.invalidate_flag(gui, DirtyFlags::CONTENT_SIZE);
-    }
-
-    pub fn invalidate_position(&self, gui: &Gui) {
-        self.invalidate_flag(gui, DirtyFlags::POSITION);
-    }
-
-    fn invalidate_flag(&self, gui: &Gui, flag: DirtyFlags) {
-        if self.is_dirty_flag_set(flag) {
-            return;
-        }
-        self.set_dirty_flag(flag);
-        if let Some(parent) = self.get_parent(gui) {
-            parent.invalidate_flag(gui, flag)
-        }
-    }
 
     pub fn update_style(&self, gui: &Gui) {
         if self.dirty_flag_clean(DirtyFlags::STYLE) {
@@ -192,12 +318,55 @@ impl WidgetData {
         self.state.border.replace(border);
     }
 
-    pub fn is_fill_height(&self) -> bool {
-        self.model.fill_height.get().is_enabled()
+}
+
+///dirty flags
+impl WidgetData {
+
+    pub fn invalidate_style(&self) {
+        self.set_dirty_flag(DirtyFlags::STYLE)
     }
-    pub fn is_fill_width(&self) -> bool {
-        self.model.fill_width.get().is_enabled()
+
+    pub fn invalidate_preferred_size(&self, gui: &Gui) {
+        self.invalidate_flag(gui, DirtyFlags::PREFERRED_SIZE);
     }
+
+    pub fn invalidate_content_size(&self, gui: &Gui) {
+        self.invalidate_flag(gui, DirtyFlags::CONTENT_SIZE);
+    }
+
+    pub fn invalidate_position(&self, gui: &Gui) {
+        self.invalidate_flag(gui, DirtyFlags::POSITION);
+    }
+
+    fn invalidate_flag(&self, gui: &Gui, flag: DirtyFlags) {
+        if self.is_dirty_flag_set(flag) {
+            return;
+        }
+        self.set_dirty_flag(flag);
+        if let Some(parent) = self.get_parent(gui) {
+            parent.invalidate_flag(gui, flag)
+        }
+    }
+
+    pub fn set_dirty_flag(&self, flag: DirtyFlags) {
+        self.state.dirty_flags.set(self.state.dirty_flags.get() | flag);
+    }
+
+    pub fn is_dirty_flag_set(&self, flag: DirtyFlags) -> bool {
+        self.state.dirty_flags.get().bitand(flag).eq(&flag)
+    }
+
+    pub fn dirty_flag_clean(&self, flag: DirtyFlags) -> bool {
+        self.state.dirty_flag_clean(flag)
+    }
+
+    pub fn dirty_flag_dirty(&self, flag: DirtyFlags) -> bool {
+        !self.state.dirty_flag_clean(flag)
+    }
+
+
+
 }
 
 impl WidgetData {
@@ -210,26 +379,7 @@ impl WidgetData {
         }
     }
 
-    pub fn action_id<>(&self) -> Option<String> {
-        let borrowed = self.model.action_id.borrow();
 
-        match borrowed.as_ref() {
-            None => None,
-            Some(r) => Some(r.to_owned())
-        }
-    }
-
-    pub fn set_alignment(&self, gui: &Gui, valignment: VAlignment, haligment: HAlignment) -> &WidgetData{
-        let mut current_alignment = self.model.alignment.get();
-        if current_alignment.vertical.eq(&valignment) && current_alignment.horizontal.eq(&haligment) {
-            return self;
-        }
-        current_alignment.vertical = valignment;
-        current_alignment.horizontal = haligment;
-        self.model.alignment.set(current_alignment);
-        self.invalidate_position(gui);
-        self
-    }
 
     pub fn set_tree_index(&mut self, tree_index: Index) {
         self.tree_index = Some(tree_index);
@@ -239,38 +389,14 @@ impl WidgetData {
         self.tree_index = None
     }
 
-    pub fn fill_width(&self) -> Fill {
-        self.model.fill_width.get()
-    }
 
-    pub fn fill_height(&self) -> Fill {
-        self.model.fill_height.get()
-    }
-
-    fn disable_fill(&self, gui: &Gui, fill: &Cell<Fill>) {
-        if fill.get().is_disabled() {
-            return;
-        }
-        fill.set(Disabled);
-        self.invalidate_preferred_size(gui)
-    }
-
-    fn enable_fill(&self, gui: &Gui, fill_cell: &Cell<Fill>, fill: Fill) {
-        let current_fill = fill_cell.get();
-        if current_fill.eq(&fill) {
-            return;
-        }
-
-        fill_cell.set(fill);
-        self.invalidate_preferred_size(gui)
-    }
 
     pub fn update_hoovered(&self, gui: &Gui, offset: &Vector2, mouse_position: &Vector2) -> bool {
-        let mut abs_widget_layout = self.get_widget_layout();
+        let mut abs_widget_layout = self.widget_layout();
         abs_widget_layout.x += offset.x;
         abs_widget_layout.y += offset.y;
 
-        let hooverable = self.is_hooverable();
+        let hooverable = self.hooverable();
 
         let new_hoovered = abs_widget_layout.check_collision_point_rec(mouse_position);
         let old_hoovered = self.get_hoover_state();
@@ -331,22 +457,6 @@ impl WidgetData {
 
     }
 
-    pub fn set_dirty_flag(&self, flag: DirtyFlags) {
-        self.state.dirty_flags.set(self.state.dirty_flags.get() | flag);
-    }
-
-    pub fn is_dirty_flag_set(&self, flag: DirtyFlags) -> bool {
-        self.state.dirty_flags.get().bitand(flag).eq(&flag)
-    }
-
-    pub fn dirty_flag_clean(&self, flag: DirtyFlags) -> bool {
-        self.state.dirty_flag_clean(flag)
-    }
-
-    pub fn dirty_flag_dirty(&self, flag: DirtyFlags) -> bool {
-        !self.state.dirty_flag_clean(flag)
-    }
-
     pub fn copy_size_to_layout(&self) {
         let borrowed_widget_size = self.geometry.widget_size.borrow();
         let widget_size = borrowed_widget_size.size();
@@ -358,7 +468,7 @@ impl WidgetData {
         }
     }
 
-    pub(crate) fn compute_default_target(&self, available_size: &Size) {
+    pub fn compute_default_target(&self, available_size: &Size) {
         let position = self.model.position.get().compute_absolute(available_size);
         let offset = self.compute_alignment_offset();
 
@@ -394,102 +504,60 @@ impl WidgetData {
     }
 }
 
-impl UpdatableWidget for Widget {
-    fn update_with_mouse_information(&self, gui: &Gui, offset: &Vector2, mouse_state: &MouseState) {
-        self.update_action(gui,offset,mouse_state);
-    }
-}
 
-impl<N: WidgetSpecific> LayoutableWidget for N {
-    fn get_computed_size(&self, gui: &Gui) -> Size {
-        if self.get_widget_data().dirty_flag_dirty(DirtyFlags::PREFERRED_SIZE) {
+impl<W: WidgetSpecific> LayoutableWidget for W {
+
+    fn compute_computed_size(&self, gui: &Gui) -> Size {
+        if self.widget_data().dirty_flag_dirty(DirtyFlags::PREFERRED_SIZE) {
             let size = self.compute_size(gui);
-            let old_size = self.get_widget_data().geometry.computed_size.replace(size);
+            let old_size = self.widget_data().geometry.computed_size.replace(size);
             if size.ne(&old_size) {
-                self.get_widget_data().invalidate_content_size(gui);
+                self.widget_data().invalidate_content_size(gui);
             }
             return size;
         }
-
-        return self.get_widget_data().geometry.computed_size.get();
+        return self.widget_data().geometry.computed_size.get();
     }
     fn update_content_size(&self, gui: &Gui, available_space: &Size) {
         let content_invalid = {
-            let content_cache = self.get_widget_data().geometry.widget_size.borrow();
-            let clean_flag = self.get_widget_data().dirty_flag_clean(DirtyFlags::CONTENT_SIZE);
+            let content_cache = self.widget_data().geometry.widget_size.borrow();
+            let clean_flag = self.widget_data().dirty_flag_clean(DirtyFlags::CONTENT_SIZE);
             let cache_valid = available_space.eq(content_cache.reference());
             !clean_flag || !cache_valid
         };
 
         if content_invalid {
-            let mut content_size = self.get_widget_data().geometry.computed_size.get();
+            let mut content_size = self.widget_data().geometry.computed_size.get();
 
-            if let Enabled { .. } = self.get_widget_data().model.fill_width.get() {
+            if let Enabled { .. } = self.widget_data().model.fill_width.get() {
                 content_size.set_width(available_space.width())
             }
-            if let Enabled { .. } = self.get_widget_data().model.fill_height.get() {
+            if let Enabled { .. } = self.widget_data().model.fill_height.get() {
                 content_size.set_height(available_space.height())
             }
             content_size.min_mut(&available_space);
 
             {
-                let mut content_cache = self.get_widget_data().geometry.widget_size.borrow_mut();
+                let mut content_cache = self.widget_data().geometry.widget_size.borrow_mut();
                 content_cache.set_reference(available_space.clone());
                 content_cache.set_size(content_size);
             }
 
             self.compute_child_content_size(gui, content_size);
-
-
-            self.get_widget_data().copy_size_to_layout();
-            self.get_widget_data().invalidate_position(gui);
+            self.widget_data().copy_size_to_layout();
+            self.widget_data().invalidate_position(gui);
         }
     }
     fn update_child_positions(&self, gui: &Gui) {
-        if self.get_widget_data().state.dirty_flag_clean(DirtyFlags::POSITION) {
+        if self.widget_data().state.dirty_flag_clean(DirtyFlags::POSITION) {
             return;
         }
         self.compute_child_positions(gui);
     }
 }
 
+/// state
 impl WidgetData {
-    pub fn set_text_style(&self, text_style_name: &str) -> &WidgetData {
-        self.model.text_style_name.replace(text_style_name.to_string());
-        self.invalidate_style();
-        self
-    }
-    pub fn set_background_style(&self, background_style_name: &str) -> &WidgetData {
-        self.model.back_style_name.replace(background_style_name.to_string());
-        self.invalidate_style();
-        self
-    }
-    pub fn set_border_style(&self, border_style: &str) -> &WidgetData {
-        self.model.border_style_name.replace(border_style.to_string());
-        self.invalidate_style();
-        self
-    }
-    pub fn set_action_id(&self, action_id: &str) -> &WidgetData {
-        self.model.action_id.replace(Some(action_id.to_string()));
-        self
-    }
-    pub fn clear_action_id(&self) -> &WidgetData {
-        self.model.action_id.replace(None);
-        self
-    }
-    pub fn set_clickable(&self, clickable: bool) -> &WidgetData {
-        self.model.clickable.set(clickable);
-        self
-    }
-
-    pub fn is_hooverable(&self) -> bool {
-        self.model.hooverable.get()
-    }
-
-    pub fn set_hooverable(&self, hooverable:bool) -> &WidgetData {
-        self.model.hooverable.set(hooverable);
-        self
-    }
 
     pub fn get_hoover_state(&self) -> bool {
         self.state.hoovered.get()
@@ -509,80 +577,4 @@ impl WidgetData {
         self.state.child_hoovered.get()
     }
 
-
-
-    //todo x and y should not be references
-    pub fn set_position(&self, gui: &Gui, x: &Coordinate, y: &Coordinate) -> &WidgetData {
-        let mut current_position = self.model.position.get();
-        if current_position.get_x().eq(&x) && current_position.get_y().eq(&y) {
-            return self;
-        }
-        current_position.set_x(x);
-        current_position.set_y(y);
-        self.model.position.set(current_position);
-        self.invalidate_position(gui);
-        self
-    }
-    pub fn set_valignment(&self, gui: &Gui, valignment: VAlignment) -> &WidgetData {
-        let current_alignment = self.model.alignment.get();
-        self.set_alignment(gui, valignment, current_alignment.horizontal);
-        self
-    }
-    pub fn set_halignment(&self, gui: &Gui, halignment: HAlignment) -> &WidgetData {
-        let current_alignment = self.model.alignment.get();
-        self.set_alignment(gui, current_alignment.vertical, halignment);
-        self
-    }
-
-    pub fn set_padding(&self, gui: &Gui, padding: Padding) -> &WidgetData {
-        let current_padding = self.model.padding.get();
-        if current_padding.eq(&padding) {
-            return self;
-        }
-        self.model.padding.set(padding);
-        self.invalidate_preferred_size(gui);
-        self
-    }
-
-    pub fn set_preferred_height(&self, gui: &Gui, height: f32) -> &WidgetData {
-        let size = self.model.preferred_size.get().with_height(height);
-        self.set_preferred_size(gui, size);
-        self
-    }
-
-    pub fn set_preferred_width(&self, gui: &Gui, width: f32) -> &WidgetData {
-        let size = self.model.preferred_size.get().with_width(width);
-        self.set_preferred_size(gui, size);
-        self
-    }
-
-    pub fn set_preferred_size(&self, gui: &Gui, size: Size) -> &WidgetData {
-        let current = self.model.preferred_size.get();
-        if current.eq(&size) {
-            return self;
-        }
-        self.model.preferred_size.set(size);
-        self.invalidate_preferred_size(gui);
-        self
-    }
-
-    pub fn disable_fill_width(&self, gui: &Gui) -> &WidgetData {
-        self.disable_fill(gui, &self.model.fill_width);
-        self
-    }
-
-    pub fn disable_fill_height(&self, gui: &Gui) -> &WidgetData {
-        self.disable_fill(gui, &self.model.fill_height);
-        self
-    }
-
-    pub fn enable_fill_width(&self, gui: &Gui, fill: Fill) -> &WidgetData {
-        self.enable_fill(gui, &self.model.fill_width, fill);
-        self
-    }
-
-    pub fn enable_fill_height(&self, gui: &Gui, fill: Fill) -> &WidgetData {
-        self.enable_fill(gui, &self.model.fill_height, fill);
-        self
-    }
 }

@@ -1,5 +1,5 @@
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetSpecific};
+use crate::widget_operation::{LayoutableWidget, WidgetSpecific};
 use crate::gui::{Gui};
 use crate::size::{Size};
 use std::cell::Cell;
@@ -52,11 +52,11 @@ impl VBoxPar {
 
 impl WidgetSpecific for VBoxPar {
 
-    fn get_widget_data(&self) -> &WidgetData {
+    fn widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
 
-    fn get_widget_data_mut(&mut self) -> &mut WidgetData {
+    fn widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
 
@@ -74,7 +74,7 @@ impl WidgetSpecific for VBoxPar {
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(child) = gui.get_widget(child_index) {
-                let child_preferred_size = child.get_computed_size(gui);
+                let child_preferred_size = child.compute_computed_size(gui);
                 nb_children += 1;
                 max_width = max_width.max(child_preferred_size.width());
                 summed_height += child_preferred_size.height();
@@ -86,7 +86,7 @@ impl WidgetSpecific for VBoxPar {
 
         let computed = Size::new(max_width, summed_height).with_padding(&self.padding());
 
-        let mut preferred = self.get_preferred_size();
+        let mut preferred = self.preferred_size();
         preferred.replace_empty_dimensions_and_max(&computed);
 
         return preferred.clone();
@@ -109,7 +109,7 @@ impl WidgetSpecific for VBoxPar {
                 nb_children += 1;
                 match fill {
                     Fill::Disabled => {
-                        summed_fixed_height += child.get_computed_size(gui).height();
+                        summed_fixed_height += child.compute_computed_size(gui).height();
                     }
                     Fill::Enabled { weight} => {
                         summed_weight += weight;
@@ -137,7 +137,7 @@ impl WidgetSpecific for VBoxPar {
                 let fill = child.fill_height();
                 match fill {
                     Fill::Disabled => {
-                        let child_height = child.get_computed_size(gui).height();
+                        let child_height = child.compute_computed_size(gui).height();
                         size.set_height(child_height);
                         child.update_content_size(gui,&size);
                     }
@@ -169,7 +169,7 @@ impl WidgetSpecific for VBoxPar {
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
                 {
-                    position.x = (content_size.width() - w.get_widget_width())*0.5;
+                    position.x = (content_size.width() - w.widget_width())*0.5;
                     w.set_widget_target(&position);
                     w.update_child_positions(gui);
                 }

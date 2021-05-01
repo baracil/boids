@@ -3,7 +3,7 @@
 
 use crate::label::LabelPar;
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetSpecific};
+use crate::widget_operation::{ LayoutableWidget, WidgetSpecific};
 use crate::pane::PanePar;
 use crate::gui::{Gui};
 use crate::vbox::VBoxPar;
@@ -23,16 +23,17 @@ pub enum  Widget {
     Slider(SliderPar)
 }
 
+
 impl Deref for Widget {
     type Target = WidgetData;
 
     fn deref(&self) -> &Self::Target {
         match self {
-            Widget::Label(p) => p.get_widget_data(),
-            Widget::Pane(p) => p.get_widget_data(),
-            Widget::VBox(p) => p.get_widget_data(),
-            Widget::HBox(p) => p.get_widget_data(),
-            Widget::Slider(p) => p.get_widget_data(),
+            Widget::Label(p) => p.widget_data(),
+            Widget::Pane(p) => p.widget_data(),
+            Widget::VBox(p) => p.widget_data(),
+            Widget::HBox(p) => p.widget_data(),
+            Widget::Slider(p) => p.widget_data(),
         }
     }
 }
@@ -40,23 +41,23 @@ impl Deref for Widget {
 impl DerefMut for Widget {
     fn deref_mut(&mut self) -> &mut Self::Target {
         match self {
-            Widget::Label(p) => p.get_widget_data_mut(),
-            Widget::Pane(p) => p.get_widget_data_mut(),
-            Widget::VBox(p) => p.get_widget_data_mut(),
-            Widget::HBox(p) => p.get_widget_data_mut(),
-            Widget::Slider(p) => p.get_widget_data_mut(),
+            Widget::Label(p) => p.widget_data_mut(),
+            Widget::Pane(p) => p.widget_data_mut(),
+            Widget::VBox(p) => p.widget_data_mut(),
+            Widget::HBox(p) => p.widget_data_mut(),
+            Widget::Slider(p) => p.widget_data_mut(),
         }
     }
 }
 
 impl LayoutableWidget for Widget {
-    fn get_computed_size(&self, gui:&Gui) -> Size {
+    fn compute_computed_size(&self, gui:&Gui) -> Size {
         match &self {
-            Widget::Label(p) => p.get_computed_size(gui),
-            Widget::Pane(p) => p.get_computed_size(gui),
-            Widget::VBox(p) => p.get_computed_size(gui),
-            Widget::HBox(p) => p.get_computed_size(gui),
-            Widget::Slider(p) => p.get_computed_size(gui),
+            Widget::Label(p) => p.compute_computed_size(gui),
+            Widget::Pane(p) => p.compute_computed_size(gui),
+            Widget::VBox(p) => p.compute_computed_size(gui),
+            Widget::HBox(p) => p.compute_computed_size(gui),
+            Widget::Slider(p) => p.compute_computed_size(gui),
         }
     }
 
@@ -97,8 +98,8 @@ impl Widget {
 
 }
 
-impl RenderableWidget for Widget {
-    fn render(&self, gui:&Gui, d: &mut impl RaylibDraw, offset:&Vector2) {
+impl Widget {
+    pub fn render(&self, gui:&Gui, d: &mut impl RaylibDraw, offset:&Vector2) {
         match self {
             Widget::Label(p) => p.render(gui, d, offset),
             Widget::Pane(p) => p.render(gui, d, offset),

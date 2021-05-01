@@ -52,7 +52,7 @@ impl MouseState {
         self.drag_info.update_drag_info(&self.left, &self.mouse_position)
     }
 
-    pub fn update2D(&mut self, d:&RaylibDrawHandle, camera:Camera2D) {
+    pub fn update_2d(&mut self, d:&RaylibDrawHandle, camera:Camera2D) {
         self.left.update(d);
         self.middle.update(d);
         self.right.update(d);

@@ -1,7 +1,7 @@
 use std::cell::{Cell, RefCell};
 use crate::widget_data::WidgetData;
 use crate::gui::Gui;
-use crate::widget_operation::{WidgetSpecific, RenderableWidget};
+use crate::widget_operation::{WidgetSpecific};
 use crate::size::Size;
 use raylib::prelude::*;
 use std::ops::Deref;
@@ -94,7 +94,7 @@ impl SliderPar {
     }
 
     fn measure_value(&self, formatted_value: &str) -> Size {
-        match self.get_text_style() {
+        match self.text_style() {
             None => Size::empty(),
             Some(ts) => ts.measure_text(formatted_value)
         }
@@ -108,11 +108,11 @@ impl SliderPar {
 
 impl WidgetSpecific for SliderPar {
 
-    fn get_widget_data(&self) -> &WidgetData {
+    fn widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
 
-    fn get_widget_data_mut(&mut self) -> &mut WidgetData {
+    fn widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
 
@@ -215,7 +215,7 @@ impl WidgetSpecific for SliderPar {
         self.widget_data.wd_update_action(gui,offset,mouse_state);
     }
 
-    fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
+    fn render_my_visual(&self, _gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         let mut content_layout = self.content_layout();
 
         content_layout.x += offset.x;
@@ -234,7 +234,7 @@ impl WidgetSpecific for SliderPar {
         }
 
         {
-            if let Some(ts) = self.get_text_style() {
+            if let Some(ts) = self.text_style() {
                 let text_size = self.value_text_size.get();
                 let mut position = Vector2::new(content_layout.x, content_layout.y);
                 position.x += (content_layout.width - text_size.width())*0.5;

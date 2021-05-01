@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::rc::Rc;
 
-use generational_arena::{Index, Arena, Iter};
+use generational_arena::{Index, Arena};
 use raylib::prelude::*;
 use vec_tree::{ChildrenIter, VecTree};
 
@@ -11,9 +11,8 @@ use crate::font::FontInfo;
 use crate::size::Size;
 use crate::text_style::TextStyle;
 use crate::widget::Widget;
-use crate::widget_operation::{RenderableWidget, LayoutableWidget};
+use crate::widget_operation::{LayoutableWidget};
 use crate::mouse::MouseState;
-use crate::widget_operation::UpdatableWidget;
 use crate::event::Event;
 use std::cell::RefCell;
 
@@ -118,7 +117,7 @@ impl Gui {
 
     pub fn get_events(&self) -> Vec<Event> {
         let arena = self.events.borrow();
-        arena.iter().map(|(idx,event)| event.clone() ).collect()
+        arena.iter().map(|(_,event)| event.clone() ).collect()
     }
 
 
@@ -158,7 +157,7 @@ impl Gui {
 
     fn update_computed_size(&self, root_index: Index) {
         let root = self.get_widget(root_index).unwrap();
-        root.get_computed_size(&self);
+        root.compute_computed_size(&self);
     }
 
 

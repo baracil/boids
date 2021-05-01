@@ -18,7 +18,6 @@ use gui::padding::Padding;
 use gui::fill::Fill::Enabled;
 use gui::hbox::HBoxPar;
 use gui::slider::SliderPar;
-use std::f32::consts::PI;
 use gui::mouse::MouseState;
 
 fn main() {
@@ -187,8 +186,6 @@ fn main() {
     let mut screen_size: Size = Size::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32);
 
     let offset = Vector2 { x: 0.0, y: 0.0 };
-
-    let vbox = gui.get_widget(_slider).unwrap();
 
     let mut camera = Camera2D::default();
     let mut mouse_state = MouseState::new();

@@ -6,7 +6,7 @@ use std::ops::Deref;
 use crate::widget_data::{WidgetData};
 
 
-use crate::widget_operation::{RenderableWidget, WidgetSpecific};
+use crate::widget_operation::{ WidgetSpecific};
 use crate::gui::{Gui};
 use crate::size::{Size};
 use crate::mouse::MouseState;
@@ -27,13 +27,13 @@ impl Deref for LabelPar {
 
 impl LabelPar {
     pub fn new() -> Self {
-        let labelPar = Self {
+        let label_par = Self {
             widget_data: WidgetData::new(),
             text: RefCell::new(None),
             text_size: Cell::new(Size::empty())
         };
-        labelPar.set_hooverable(true);
-        labelPar
+        label_par.set_hooverable(true);
+        label_par
     }
 
     pub fn clear_text(&self, gui: &Gui) -> &LabelPar {
@@ -62,7 +62,7 @@ impl LabelPar {
         match self.text.borrow().as_ref() {
             None => Size::empty(),
             Some(text) => {
-                match self.get_text_style() {
+                match self.text_style() {
                     None => Size::empty(),
                     Some(text_style) => {
                         text_style.measure_text(text)
@@ -76,11 +76,11 @@ impl LabelPar {
 
 impl WidgetSpecific for LabelPar {
 
-    fn get_widget_data(&self) -> &WidgetData {
+    fn widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
 
-    fn get_widget_data_mut(&mut self) -> &mut WidgetData {
+    fn widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
 
@@ -92,7 +92,7 @@ impl WidgetSpecific for LabelPar {
 
         let text_size_with_padding = text_size.with_padding(&padding).width_border(3.0);
 
-        let mut preferred = self.get_preferred_size();
+        let mut preferred = self.preferred_size();
 
         preferred.replace_empty_dimensions_and_max(&text_size_with_padding);
         preferred
@@ -107,7 +107,7 @@ impl WidgetSpecific for LabelPar {
         self.widget_data.wd_update_action(gui,offset,mouse_state);
     }
 
-    fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
+    fn render_my_visual(&self, _gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {
         if let Some(text) = self.text.borrow().as_ref() {
             let content_layout = self.content_layout();
             let text_size = self.text_size.get();
@@ -116,7 +116,7 @@ impl WidgetSpecific for LabelPar {
                 y: content_layout.y + offset.y + (content_layout.height - text_size.height())*0.5,
             };
 
-            if let Some(text_style) = self.get_text_style() {
+            if let Some(text_style) = self.text_style() {
                 text_style.draw_text(d, text, &position)
             }
         }

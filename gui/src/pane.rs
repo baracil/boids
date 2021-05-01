@@ -2,7 +2,7 @@ use raylib::prelude::*;
 
 use crate::gui::{Gui};
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetSpecific};
+use crate::widget_operation::{ LayoutableWidget, WidgetSpecific};
 use crate::size::{Size};
 use crate::position::Coordinate::{Absolute};
 use std::ops::Deref;
@@ -29,11 +29,11 @@ impl Deref for PanePar {
 
 impl WidgetSpecific for PanePar {
 
-    fn get_widget_data(&self) -> &WidgetData {
+    fn widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
 
-    fn get_widget_data_mut(&mut self) -> &mut WidgetData {
+    fn widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
 
@@ -54,10 +54,10 @@ impl WidgetSpecific for PanePar {
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(w) = gui.get_widget(child_index) {
-                let preferred = w.get_computed_size(gui);
-                let target = w.get_position();
+                let preferred = w.compute_computed_size(gui);
+                let target = w.position();
 
-                match (target.get_x(), w.is_fill_width(), first_x) {
+                match (target.get_x(), w.fill_width_enabled(), first_x) {
                     (Absolute(value), false, true) => {
                         xmin = *value;
                         xmax = *value + preferred.width();
@@ -72,7 +72,7 @@ impl WidgetSpecific for PanePar {
                     }
                 }
 
-                match (target.get_y(), w.is_fill_height(), first_y) {
+                match (target.get_y(), w.fill_height_enabled(), first_y) {
                     (Absolute(value), false, true) => {
                         ymin = *value;
                         ymax = *value + preferred.height();
@@ -94,7 +94,7 @@ impl WidgetSpecific for PanePar {
 
         let children_size = Size::new(pref_width, pref_height).with_padding(&self.padding());
 
-        let mut user_preferred_size = self.get_preferred_size();
+        let mut user_preferred_size = self.preferred_size();
 
         user_preferred_size.replace_empty_dimensions_and_max(&children_size);
         user_preferred_size
@@ -139,7 +139,7 @@ impl WidgetSpecific for PanePar {
 
     }
 
-    fn render_my_visual(&self, gui: &Gui, d: &mut impl RaylibDraw, offset: &Vector2) {}
+    fn render_my_visual(&self, _gui: &Gui, _d: &mut impl RaylibDraw, _offset: &Vector2) {}
 
     fn update_action(&self, gui: &Gui, offset: &Vector2, mouse_state: &MouseState) {
         self.widget_data.wd_update_action(gui,offset,mouse_state);

@@ -1,5 +1,5 @@
 use crate::widget_data::{WidgetData};
-use crate::widget_operation::{RenderableWidget, LayoutableWidget, WidgetSpecific};
+use crate::widget_operation::{LayoutableWidget, WidgetSpecific};
 use crate::gui::{Gui};
 use crate::size::{Size};
 use std::cell::Cell;
@@ -42,11 +42,11 @@ impl HBoxPar {
 
 impl WidgetSpecific for HBoxPar {
 
-    fn get_widget_data(&self) -> &WidgetData {
+    fn widget_data(&self) -> &WidgetData {
         &self.widget_data
     }
 
-    fn get_widget_data_mut(&mut self) -> &mut WidgetData {
+    fn widget_data_mut(&mut self) -> &mut WidgetData {
         &mut self.widget_data
     }
 
@@ -65,7 +65,7 @@ impl WidgetSpecific for HBoxPar {
 
         for child_index in gui.get_widget_children(tree_index) {
             if let Some(child) = gui.get_widget(child_index) {
-                let child_computed_size = child.get_computed_size(gui);
+                let child_computed_size = child.compute_computed_size(gui);
                 nb_children += 1;
                 max_height = max_height.max(child_computed_size.height());
                 summed_width += child_computed_size.width();
@@ -78,7 +78,7 @@ impl WidgetSpecific for HBoxPar {
 
 
 
-        let mut preferred = self.get_preferred_size();
+        let mut preferred = self.preferred_size();
         preferred.replace_empty_dimensions_and_max(&computed);
 
         return preferred.clone();
@@ -101,7 +101,7 @@ impl WidgetSpecific for HBoxPar {
                 nb_children+=1;
                 match fill {
                     Fill::Disabled => {
-                        summed_fixed_width += child.get_computed_size(gui).width();
+                        summed_fixed_width += child.compute_computed_size(gui).width();
                     }
                     Fill::Enabled { weight} => {
                         summed_weight += weight;
@@ -128,7 +128,7 @@ impl WidgetSpecific for HBoxPar {
                 let fill = child.fill_width();
                 match fill {
                     Fill::Disabled => {
-                        let child_width = child.get_computed_size(gui).width();
+                        let child_width = child.compute_computed_size(gui).width();
                         size.set_width(child_width);
                         child.update_content_size(gui,&size);
                     }
@@ -166,7 +166,7 @@ impl WidgetSpecific for HBoxPar {
                     w.update_child_positions(gui);
                 }
 
-                position.x += w.get_widget_width() + spacing;
+                position.x += w.widget_width() + spacing;
             }
         }
     }
