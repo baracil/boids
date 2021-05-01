@@ -168,11 +168,11 @@ impl WidgetSpecific for SliderPar {
 
 
         if drag_info.started() {
-            let mut cursor_layout = self.cursor_layout.get();
-            cursor_layout.x += offset.x;
-            cursor_layout.y += offset.y;
+            let mut content_layout = self.content_layout();
+            content_layout.x += offset.x;
+            content_layout.y += offset.y;
             let mouse_position = drag_info.starting_position().clone();
-            let inside= cursor_layout.check_collision_point_rec(mouse_position);
+            let inside= content_layout.check_collision_point_rec(mouse_position);
 
             if inside {
                 self.drag_value.set(self.value.get());
