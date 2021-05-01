@@ -20,6 +20,7 @@ use gui::position::Coordinate::Absolute;
 use gui::slider::SliderPar;
 use std::process::abort;
 use gui::event::Event::Drag;
+use gui::label::LabelPar;
 
 mod data;
 
@@ -122,7 +123,7 @@ fn main() {
 
     let container = {
         let par = VBoxPar::new();
-        par.set_spacing(&gui, 50.)
+        par.set_spacing(&gui, 5.)
             .set_padding(&gui, Padding::same(20.0))
             .set_border_style("default")
             .set_preferred_width(&gui, 300.0)
@@ -133,6 +134,15 @@ fn main() {
         gui.insert_root(VBox(par))
     };
 
+
+    {
+        let par = LabelPar::new();
+        par.set_text(&gui, "Alignment")
+            .set_text_style("default")
+            .set_border_style("none")
+            .enable_fill_width(&gui,Enabled {weight:1});
+        gui.add_child(container, Label(par));
+    }
     {
         let par = SliderPar::new();
         par.set_value(&gui, 100.0 * app_state.world.parameters.alignment_factor)
@@ -147,6 +157,15 @@ fn main() {
     }
 
     {
+        let par = LabelPar::new();
+        par.set_text(&gui, "Cohesion")
+            .set_text_style("default")
+            .set_border_style("none")
+            .set_padding(&gui, Padding::new(40.0,0.0,0.0,0.0))
+            .enable_fill_width(&gui,Enabled {weight:1});
+        gui.add_child(container, Label(par));
+    }
+    {
         let par = SliderPar::new();
         par.set_value(&gui, 100.0 * app_state.world.parameters.cohesion_factor)
             .set_value_min(&gui, 0.0)
@@ -157,6 +176,16 @@ fn main() {
             .enable_fill_width(&gui, Enabled { weight: 1 });
 
         gui.add_child(container, Slider(par));
+    }
+
+    {
+        let par = LabelPar::new();
+        par.set_text(&gui, "Separation")
+            .set_text_style("default")
+            .set_border_style("none")
+            .set_padding(&gui, Padding::new(40.0,0.0,0.0,0.0))
+            .enable_fill_width(&gui,Enabled {weight:1});
+        gui.add_child(container, Label(par));
     }
     {
         let par = SliderPar::new();

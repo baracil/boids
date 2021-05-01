@@ -219,13 +219,3 @@ fn constraint_boid_rect(boid: &mut Boid, playfield_size: f32) {
         boid.velocity.x -= 0.1;
     }
 }
-
-// fn constraint_boid_tanh(boid: &mut Boid, playfield_size: f32) {
-//     let distance = boid.position.hypot();
-//     let limit = playfield_size;
-//
-//     let d = (1.0 + ((distance - limit) * 100.0 / limit).tanh()) * CONSTRAINT_STRENGTH;
-//
-//     boid.velocity.x -= boid.position.x / distance * d;
-//     boid.velocity.y -= boid.position.y / distance * d;
-// }
