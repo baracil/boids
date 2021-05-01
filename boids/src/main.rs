@@ -1,4 +1,5 @@
 use raylib::prelude::*;
+use raylib::consts::*;
 
 use crate::data::boid::Boid;
 use crate::data::world::World;
@@ -21,6 +22,7 @@ use gui::slider::SliderPar;
 use std::process::{abort, exit};
 use gui::event::Event::Drag;
 use gui::label::LabelPar;
+use raylib::ease::Tween;
 
 mod data;
 
@@ -113,6 +115,7 @@ fn main() {
 
 
     let mut gui = Gui::new();
+
 
     gui.load_font(&mut rl, &thread, "default", "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf", 48, 200);
     gui.load_font(&mut rl, &thread, "small", "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf", 20, 200);
@@ -225,7 +228,7 @@ fn main() {
             .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
         let par = SliderPar::new();
-        par.set_value(&gui, app_state.world.parameters.safe_space_ratio*100.0)
+        par.set_value(&gui, app_state.world.parameters.safe_space_ratio * 100.0)
             .set_value_min(&gui, 0.0)
             .set_value_max(&gui, 100.0)
             .set_text_style("default")
@@ -251,9 +254,33 @@ fn main() {
     let mut mouse_state = MouseState::new();
     let mut screen_size: Size = Size::new(rl.get_screen_width() as f32, rl.get_screen_height() as f32);
     let mut should_quit = false;
-    let offset = Vector2::zero();
+
+
+    let mut gui_visible = true;
+    let mut offset = Vector2::zero();
+
+    let mut tween: Option<Tween> = None;
+    let root = gui.get_root().unwrap();
+
     while !rl.window_should_close() && !should_quit {
         let mut d = rl.begin_drawing(&thread);
+        let dt = d.get_frame_time();
+        mouse_state.update(&d);
+
+
+        if let Some(t) = tween.as_mut() {
+            offset.x = t.apply(dt);
+        }
+
+        if d.is_key_released(KeyboardKey::KEY_TAB) {
+            let t = if gui_visible {
+                Tween::new(ease::cubic_in, offset.x, -root.widget_width(), 0.5)
+            } else {
+                Tween::new(ease::cubic_out, offset.x, 0.0, 0.5)
+            };
+            tween = Some(t);
+            gui_visible = !gui_visible
+        }
 
         if d.is_window_resized() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
@@ -268,11 +295,7 @@ fn main() {
         d.clear_background(Color::WHITE);
         d.draw_fps(app_state.screen_size.width - 100, 0);
 
-        mouse_state.update(&d);
-
-
         gui.layout_and_render(&mut d, &screen_size, &mouse_state, &offset);
-
 
         {
             let mut d = d.begin_mode2D(camera);
@@ -283,8 +306,6 @@ fn main() {
             );
         }
 
-        let dt = d.get_frame_time();
-
         let events = gui.get_events();
         for event in events.iter() {
             if let Drag(p) = event {
@@ -293,7 +314,7 @@ fn main() {
                     ALIGNMENT_ID => { app_state.world.parameters.alignment_factor = p.value() / 100. }
                     SEPARATION_ID => { app_state.world.parameters.separation_factor = p.value() / 100. }
                     DEAD_ANGLE_ID => { app_state.world.parameters.set_dead_angle(p.value()) }
-                    SAFE_SPACE_RATIO_ID => { app_state.world.parameters.safe_space_ratio = p.value()*0.01 }
+                    SAFE_SPACE_RATIO_ID => { app_state.world.parameters.safe_space_ratio = p.value() * 0.01 }
                     &_ => {}
                 }
             }
