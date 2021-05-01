@@ -6,7 +6,7 @@ use crate::data::vector::Vector;
 pub struct Boid {
     pub position: Vector,
     pub velocity: Vector,
-    pub speed: f32,
+    speed: f32,
 }
 
 impl Boid {
@@ -31,7 +31,8 @@ impl Boid {
             self.velocity.scale(max_speed / self.speed);
             self.speed = max_speed;
         }
-        if self.speed == 1e-6 {
+
+        if self.speed <= 1e-6 {
             let v: f32 = rand::random::<f32>() * PI * 2.0;
             self.velocity.x = min_speed * v.cos();
             self.velocity.y = min_speed * v.sin();
@@ -40,5 +41,8 @@ impl Boid {
             self.velocity.scale(min_speed / self.speed);
             self.speed = min_speed;
         }
+    }
+    pub fn speed(&self) -> f32 {
+        self.speed
     }
 }

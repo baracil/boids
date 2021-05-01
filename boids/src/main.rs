@@ -18,7 +18,7 @@ use gui::alignment::VAlignment::Top;
 use gui::alignment::HAlignment::Left;
 use gui::position::Coordinate::Absolute;
 use gui::slider::SliderPar;
-use std::process::abort;
+use std::process::{abort, exit};
 use gui::event::Event::Drag;
 use gui::label::LabelPar;
 
@@ -32,21 +32,22 @@ pub struct ScreenSize {
     pub height: i32,
 }
 
-const COHESION_ID:&str = "cohesion_id";
-const SEPARATION_ID:&str = "separation_id";
-const ALIGNMENT_ID:&str = "alignment_id";
+const COHESION_ID: &str = "cohesion_id";
+const SEPARATION_ID: &str = "separation_id";
+const DEAD_ANGLE_ID: &str = "dead_angle_id";
+const ALIGNMENT_ID: &str = "alignment_id";
 
 fn draw_birds(d: &mut impl RaylibDraw, boids: &[Boid], bird_size: f32) {
     {
         let size_factor: f32 = 1.2;
 
-        let mut head = Vector2 { x: 0.0, y: 0.0 };
-        let mut left_wing = Vector2 { x: 0.0, y: 0.0 };
-        let mut right_wing = Vector2 { x: 0.0, y: 0.0 };
+        let mut head = Vector2::zero();
+        let mut left_wing = Vector2::zero();
+        let mut right_wing = Vector2::zero();
 
         for boid in boids {
-            let nvx = size_factor * bird_size * boid.velocity.x / boid.speed;
-            let nvy = size_factor * bird_size * boid.velocity.y / boid.speed;
+            let nvx = size_factor * bird_size * boid.velocity.x / boid.speed();
+            let nvy = size_factor * bird_size * boid.velocity.y / boid.speed();
             head.x = nvx + boid.position.x;
             head.y = nvy + boid.position.y;
 
@@ -119,7 +120,7 @@ fn main() {
 
     gui.add_border("default", Line { color: Color::BLACK, thickness: 1.0 });
     gui.add_background("red", Solid { idle_color: red, hoovered_color: red, armed_color: red });
-    gui.add_text_style("default","default",Color::BLACK,0.0);
+    gui.add_text_style("default", "default", Color::BLACK, 0.0);
 
     let container = {
         let par = VBoxPar::new();
@@ -140,7 +141,7 @@ fn main() {
         par.set_text(&gui, "Alignment")
             .set_text_style("default")
             .set_border_style("none")
-            .enable_fill_width(&gui,Enabled {weight:1});
+            .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
     }
     {
@@ -161,8 +162,8 @@ fn main() {
         par.set_text(&gui, "Cohesion")
             .set_text_style("default")
             .set_border_style("none")
-            .set_padding(&gui, Padding::new(40.0,0.0,0.0,0.0))
-            .enable_fill_width(&gui,Enabled {weight:1});
+            .set_padding(&gui, Padding::new(40.0, 0.0, 0.0, 0.0))
+            .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
     }
     {
@@ -183,8 +184,8 @@ fn main() {
         par.set_text(&gui, "Separation")
             .set_text_style("default")
             .set_border_style("none")
-            .set_padding(&gui, Padding::new(40.0,0.0,0.0,0.0))
-            .enable_fill_width(&gui,Enabled {weight:1});
+            .set_padding(&gui, Padding::new(40.0, 0.0, 0.0, 0.0))
+            .enable_fill_width(&gui, Enabled { weight: 1 });
         gui.add_child(container, Label(par));
     }
     {
@@ -194,6 +195,28 @@ fn main() {
             .set_value_max(&gui, 100.0)
             .set_text_style("default")
             .set_action_id(SEPARATION_ID)
+            .set_text_style("default")
+            .enable_fill_width(&gui, Enabled { weight: 1 });
+
+        gui.add_child(container, Slider(par));
+    }
+
+    {
+        let par = LabelPar::new();
+        par.set_text(&gui, "Dead Angle")
+            .set_text_style("default")
+            .set_border_style("none")
+            .set_padding(&gui, Padding::new(40.0, 0.0, 0.0, 0.0))
+            .enable_fill_width(&gui, Enabled { weight: 1 });
+        gui.add_child(container, Label(par));
+    }
+    {
+        let par = SliderPar::new();
+        par.set_value(&gui, app_state.world.parameters.dead_angle())
+            .set_value_min(&gui, 0.0)
+            .set_value_max(&gui, 180.0)
+            .set_text_style("default")
+            .set_action_id(DEAD_ANGLE_ID)
             .set_text_style("default")
             .enable_fill_width(&gui, Enabled { weight: 1 });
 
@@ -253,13 +276,13 @@ fn main() {
         for event in events.iter() {
             if let Drag(p) = event {
                 match p.action_id() {
-                    COHESION_ID => {app_state.world.parameters.cohesion_factor = p.value()/100.},
-                    ALIGNMENT_ID => {app_state.world.parameters.alignment_factor = p.value()/100.},
-                    SEPARATION_ID => {app_state.world.parameters.separation_factor = p.value()/100.},
+                    COHESION_ID => { app_state.world.parameters.cohesion_factor = p.value() / 100. }
+                    ALIGNMENT_ID => { app_state.world.parameters.alignment_factor = p.value() / 100. }
+                    SEPARATION_ID => { app_state.world.parameters.separation_factor = p.value() / 100. }
+                    DEAD_ANGLE_ID => { app_state.world.parameters.set_dead_angle(p.value()) }
                     &_ => {}
                 }
             }
-
         }
 
         app_state.world.compute(dt);

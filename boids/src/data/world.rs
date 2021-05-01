@@ -5,7 +5,9 @@ use crate::data::steering::Steering;
 use crate::data::vector::Vector;
 
 const CONSTRAINT_STRENGTH: f32 = 0.1;
-const DEAD_ANGLE: f32 = 20.0; // in degree
+
+const DEAD_ANGLE: f32 = 20.0;
+// in degree
 const SAFE_SPACE_RATIO: f32 = 0.8;
 const DEFAULT_VISIBILITY_FACTOR: f32 = 3.0;
 
@@ -27,10 +29,16 @@ pub struct Parameters {
     pub min_bird_speed: f32,
     pub max_bird_speed: f32,
     pub visibility_radius: f32,
-    pub cos_max_angle: f32,
+    dead_angle: f32,
+    cos_max_angle: f32,
     pub separation_factor: f32,
     pub cohesion_factor: f32,
     pub alignment_factor: f32,
+}
+
+
+pub fn compute_cos_max_angle(dead_angle: f32) -> f32 {
+    (std::f32::consts::PI * (1. - dead_angle / 180.)).cos()
 }
 
 impl Parameters {
@@ -38,13 +46,27 @@ impl Parameters {
         Parameters {
             bird_size: DEFAULT_BIRD_SIZE,
             visibility_radius: DEFAULT_BIRD_SIZE * DEFAULT_VISIBILITY_FACTOR,
-            cos_max_angle: (std::f32::consts::PI * (1. - DEAD_ANGLE / 180.)).cos(),
+            dead_angle: DEAD_ANGLE,
+            cos_max_angle: compute_cos_max_angle(DEAD_ANGLE),
             cohesion_factor: DEFAULT_COHESION_FACTOR * 0.01,
             separation_factor: DEFAULT_SEPARATION_FACTOR * 0.01,
             alignment_factor: DEFAULT_ALIGNMENT_FACTOR * 0.01,
             min_bird_speed: DEFAULT_BIRD_MIN_SPEED,
             max_bird_speed: DEFAULT_BIRD_MAX_SPEED,
         }
+    }
+
+    pub fn dead_angle(&self) -> f32 {
+        self.dead_angle
+    }
+
+    pub fn cos_max_angle(&self) -> f32 {
+        self.cos_max_angle
+    }
+
+    pub fn set_dead_angle(&mut self, dead_angle: f32) {
+        self.dead_angle = dead_angle;
+        self.cos_max_angle = compute_cos_max_angle(dead_angle);
     }
 }
 
@@ -54,6 +76,7 @@ pub struct World {
     pub current: Vec<Boid>,
     pub next: Vec<Boid>,
 }
+
 impl World {
     pub fn new(nb_birds: usize, playfield: f32) -> Self {
         World {
@@ -77,7 +100,7 @@ impl World {
             boid.position.y = (rng.gen::<f32>() - 0.5) * self.playfield_size;
             boid.velocity.x = (rng.gen::<f32>() - 0.5) * self.playfield_size * 0.1;
             boid.velocity.y = (rng.gen::<f32>() - 0.5) * self.playfield_size * 0.1;
-            boid.speed = boid.velocity.hypot();
+            boid.update_speed();
 
             boid.clamp_speed(
                 self.parameters.min_bird_speed,
@@ -120,12 +143,12 @@ impl World {
                 target.velocity.y +=
                     target.velocity.y * (2.0 * rng.gen::<f32>() - 1.0) * RANDOM_FACTOR;
 
-                target.update_speed();
-                target.clamp_speed(
-                    self.parameters.min_bird_speed,
-                    self.parameters.max_bird_speed,
-                );
             }
+            target.update_speed();
+            target.clamp_speed(
+                self.parameters.min_bird_speed,
+                self.parameters.max_bird_speed,
+            );
             constraint_boid_rect(&mut target, self.playfield_size);
         }
 
@@ -184,7 +207,7 @@ impl World {
             return NOT_VISIBLE;
         }
         let prod = (separation.x * reference.velocity.x + separation.y * reference.velocity.y)
-            / (distance * reference.speed);
+            / (distance * reference.speed());
         if prod < self.parameters.cos_max_angle {
             return NOT_VISIBLE;
         }
