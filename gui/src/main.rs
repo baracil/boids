@@ -198,7 +198,6 @@ fn main() {
         let mut d = rl.begin_drawing(&thread);
 
 
-        println!("{:?}", d.is_window_resized());
         if d.is_window_resized() {
             screen_size = Size::new(d.get_screen_width() as f32, d.get_screen_height() as f32);
             camera.offset.x = screen_size.width() * 0.5;
@@ -220,6 +219,10 @@ fn main() {
             gui.render(&mut d, &offset);
         }
 
-        gui.get_events();
+         for x in gui.get_events() {
+
+            println!("{:?}",x);
+
+        }
     }
 }

@@ -191,11 +191,14 @@ impl WidgetSpecific for SliderPar {
             let displacement = (mouse_position.x - (content_layout.x + offset.x + cursor_layout.width*0.5) )/available_bar_width;
 
             let value = displacement.clamp(0.0,1.0)*(value_max - value_min) + value_min;
-            self.drag_value.set(value);
-            self.invalidate_preferred_size(gui);
-            self.invalidate_position(gui);
-            if let Some(action_id) = self.action_id() {
-                gui.add_event(Drag(DragPar::in_progress(action_id, value)))
+            let current_value = self.drag_value.get();
+            if current_value != value {
+                self.drag_value.set(value);
+                self.invalidate_preferred_size(gui);
+                self.invalidate_position(gui);
+                if let Some(action_id) = self.action_id() {
+                    gui.add_event(Drag(DragPar::in_progress(action_id, value)))
+                }
             }
         }
         else if drag_info.done() && self.drag_in_progress.get() {
