@@ -23,6 +23,8 @@ use std::process::{abort, exit};
 use gui::event::Event::Drag;
 use gui::label::LabelPar;
 use raylib::ease::Tween;
+use std::fs::File;
+use std::path::Path;
 
 mod data;
 
@@ -117,8 +119,10 @@ fn main() {
     let mut gui = Gui::new();
 
 
-    gui.load_font(&mut rl, &thread, "default", "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf", 48, 200);
-    gui.load_font(&mut rl, &thread, "small", "/home/Bastien Aracil/Downloads/FreckleFace-Regular.ttf", 20, 200);
+    let font_path = "resources/FredokaOne-Regular.ttf";
+
+    gui.load_font(&mut rl, &thread, "default", font_path, 48, 200);
+    gui.load_font(&mut rl, &thread, "small", font_path, 20, 200);
 
     let red = Color::RED;
 
